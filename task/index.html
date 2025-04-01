@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./style/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h2>API Table</h2>
+    <table>
+        <tr>
+            <th>API Name</th>
+            <th>API Description</th>
+            <th>Action</th>
+        </tr>
+
+
+        <tr>
+            <td><div id="apiName1">Earthquakes</div></td>
+            <td>
+                <div id="apiDesc1">
+                  
+                    <label for="magnitude">Enter Magnitude to Filter Earthquakes:</label>
+                    <input type="number" id="magnitude" name="magnitude" step="any" required>
+                </div>
+            </td>
+            <td>
+                
+                <button class="submitbtn1" id="submitMagnitudeBtn">Submit</button>
+            </td>
+        </tr>
+
+
+       <tr>
+            <td><div id="apiName2">Timezone</div></td>
+            <td>
+                <div id="apiDesc2">
+                    <label for="countryName">Type in the country name:</label>
+                    <input type="text" id="countryName" name="countryName" required>
+                </div>
+            </td>
+            <td>
+                <button class="submitbtn2" id="submitCountryBtn">Submit</button>
+            </td>
+        </tr>
+
+  
+
+
+
+
+        <tr>
+            <td><div id="apiName3">Weather Station</div></td>
+            <td>
+                <div id="apiDesc3">
+                    <label for="stationName">Type in the station location:</label>
+                    <input type="text" id="stationName" name="stationName" required>
+                </div>
+            </td>
+            <td>
+                 <button class="submitbtn2" id="submitstationNameBtn">Submit</button>
+            </td>
+        </tr>
+    </table>
+
+    <div class="results">
+        <p id="loader">Loading ...</p>
+        <div id="results"></div>
+    </div>
+</div>
+
+<script src="./js/script.js"></script>
+
+<script>
+$(document).ready(function () {
+ 
+  $("#submitMagnitudeBtn").click(function (e) {
+    e.preventDefault(); 
+
+    var magnitude = $("#magnitude").val(); 
+
+   
+    $("#loader").show();
+    $("#results").html(""); 
+
+    
+    $.ajax({
+      url: "./php/magnitude.php", 
+      type: "POST",
+      data: { magnitude: magnitude }, 
+      success: function (response) {
+        $("#loader").hide();
+        $("#results").html(response); 
+      },
+      error: function () {
+        $("#loader").hide();
+        $("#results").html("Error loading data.");
+      },
+    });
+  });
+});
+
+
+$(document).ready(function () {
+  
+  $("#submitCountryBtn").click(function (e) {
+    e.preventDefault(); 
+
+    var countryName = $("#countryName").val(); 
+
+    
+    $("#loader").show();
+    $("#results").html(""); 
+
+   
+    $.ajax({
+      url: "./php/timeZone.php", 
+      type: "POST",
+      data: { countryName: countryName }, 
+      success: function (response) {
+        $("#loader").hide(); 
+        $("#results").html(response); 
+      },
+      error: function () {
+        $("#loader").hide();
+        $("#results").html("Error loading data.");
+      },
+    });
+  });
+});
+
+$(document).ready(function(){
+    $("#submitstationNameBtn").click(function(e){
+        e.preventDefault();
+
+
+        var stationName=$("#stationName").val();
+        $("#loader").show();
+        $("#results").html("");
+
+        $.ajax({
+            url:"./php/stationName.php",
+            type:"POST",
+            data:{stationName:stationName},
+            success:function(response){
+            $("#loader").hide();
+            $("#results").html(response);
+            },
+            error:function(){
+                $("#loader").hide();
+        $("#results").html("Error loading data."); 
+            },
+            
+        });
+
+
+    });
+});
+
+
+
+</script>
+
+</body>
+</html>
