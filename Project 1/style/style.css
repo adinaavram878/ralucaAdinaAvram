@@ -1,87 +1,81 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
-  background-color: #f4f4f4;
-}
+ 
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+    }
 
-#map {
-  height: 60vh;
-  width: 100%;
-  z-index: 0;
-}
+    .controls {
+      width: 250px;
+      padding: 1rem;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 1000;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+    }
 
+    #map {
+      flex-grow: 1;
+      height: 100%;
+      width: 100%;
+      z-index: 0;
+    }
 
-.controls {
-  padding: 1rem;
-  background: #f8f9fa;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  position: relative;
-  z-index: 1000;
-}
+    .controls select,
+    .controls button {
+      width: 100%;
+    }
 
+    #loader {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px 30px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #333;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
 
-.btn-group {
-  flex-wrap: wrap;
-}
+    #bodyWeather img {
+      width: 50px;
+      height: 50px;
+      vertical-align: middle;
+    }
 
-.btn-group .btn {
-  margin: 2px 0;
-  width: 100%;
-}
+    .leaflet-control-layers {
+      font-size: 14px;
+      background: white;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
 
+    @media (max-width: 600px) {
+      body {
+        flex-direction: column;
+      }
 
-#loader {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 9999;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 20px 30px;
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: #333;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-}
+      .controls {
+        width: 100%;
+        flex-direction: column;
+        border-right: none;
+        border-bottom: 1px solid #ccc;
+        height: auto;
+      }
 
-
-#bodyWeather img {
-  width: 50px;
-  height: 50px;
-  vertical-align: middle;
-}
-
-
-.leaflet-control-layers {
-  font-size: 14px;
-  background: white;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
-}
-
-
-@media (min-width: 600px) {
-  .controls {
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-
-  .controls > * {
-    margin-right: 1rem;
-  }
-
-  .btn-group .btn {
-    width: auto;
-    margin-right: 5px;
-  }
-
-  #map {
-    height: 70vh;
-  }
-}
+      #map {
+        height: 70vh;
+      }
+    }
