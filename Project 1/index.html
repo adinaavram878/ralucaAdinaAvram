@@ -4,48 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Responsive Country Info App</title>
+
+ 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css" />
+  
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+
+  
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
   <link rel="stylesheet" href="./style/style.css" />
+
  
 </head>
 <body>
 
-  
   <div class="controls">
-    <select id="clusterSelect" class="form-select w-auto mb-2">
+    <select id="clusterSelect" class="form-select mb-2">
       <option value="all" selected>All Countries</option>
       <option value="asia">Asia</option>
       <option value="europe">Europe</option>
       <option value="americas">Americas</option>
     </select>
 
-    <select id="countrySelect" class="form-select w-auto mb-2"></select>
+    <select id="countrySelect" class="form-select mb-2"></select>
 
-    <div class="btn-group d-flex flex-wrap">
-      <button class="btn btn-primary" id="btnName">Name/Capital</button>
-      <button class="btn btn-secondary" id="btnPop">Population</button>
-      <button class="btn btn-success" id="btnCurrency">Currency/Rate</button>
-      <button class="btn btn-info text-white" id="btnWeather">Weather/Forecast</button>
-      <button class="btn btn-warning" id="btnWiki">Wikipedia</button>
-      <button class="btn btn-dark" id="btnLocalWeather">My Location Weather</button>
-    </div>
+    <button class="btn btn-primary" id="btnName"><i class="bi bi-flag-fill me-2"></i>Name / Capital</button>
+    <button class="btn btn-secondary" id="btnPop"><i class="bi bi-people-fill me-2"></i>Population</button>
+    <button class="btn btn-success" id="btnCurrency"><i class="bi bi-currency-exchange me-2"></i>Currency / Rate</button>
+    <button class="btn btn-info text-white" id="btnWeather"><i class="bi bi-cloud-sun-fill me-2"></i>Weather / Forecast</button>
+    <button class="btn btn-warning" id="btnWiki"><i class="bi bi-book-half me-2"></i>Wikipedia</button>
+    <button class="btn btn-dark" id="btnLocalWeather"><i class="bi bi-geo-alt-fill me-2"></i>My Location Weather</button>
   </div>
 
-  
   <div id="map"></div>
 
-  
   <div id="loader" aria-live="polite" aria-label="Loading">
     <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
       <span class="visually-hidden">Loading...</span>
     </div>
   </div>
 
-  
+
   <div class="modal fade" id="modalName" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title">Country Info</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body" id="bodyName"></div></div></div></div>
