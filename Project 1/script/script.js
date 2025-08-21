@@ -1,146 +1,274 @@
+var map;
+var userLat, userLng;
 
-const weatherAPIKey = "60b5e9ec6028dc5a8c9ad0e59fbedea2";
-let countryData = {}, borderLayer;
-
-const map = L.map("map", { center: [20, 0], zoom: 2, layers: [] });
-
-const streets = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
-  attribution: "Tiles © Esri",
-});
-const satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-  attribution: "Tiles © Esri Imagery",
-});
-streets.addTo(map);
-L.control.layers({ Streets: streets, Satellite: satellite }).addTo(map);
-
-borderLayer = L.geoJSON(null, { style: { color: "black", weight: 2, fillOpacity: 0 } }).addTo(map);
-
-const clusters = {
-  asia: [{ code: "IN", name: "India" }, { code: "JP", name: "Japan" }],
-  europe: [{ code: "DE", name: "Germany" }, { code: "GB", name: "England" }],
-  americas: [{ code: "CA", name: "Canada" }, { code: "BR", name: "Brazil" }],
+const countryCoordinates = {
+  uk: { lat: 54.5, lon: -4 },
+  us: { lat: 39.8, lon: -98.6 },
+  jp: { lat: 36.2, lon: 138.3 },
+  au: { lat: -25.3, lon: 133.8 },
+  in: { lat: 20.6, lon: 78.9 },
 };
 
-function showLoader() { $("#loader").show(); }
-function hideLoader() { $("#loader").hide(); }
+var streets = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+  { attribution: "Tiles &copy; Esri" }
+);
 
-function populateCountries(cluster) {
-  const $countrySelect = $("#countrySelect").empty();
-  const all = Object.values(clusters).flat();
-  const list = cluster === "all" ? all : clusters[cluster] || [];
-  list.forEach(c => $countrySelect.append(`<option value="${c.code}">${c.name}</option>`));
-  if ($countrySelect.val()) loadCountry($countrySelect.val());
-}
+var satellite = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  { attribution: "Tiles &copy; Esri" }
+);
 
-async function loadCountry(code) {
-  showLoader();
-  try {
-    const res = await fetch(`https://restcountries.com/v3.1/alpha/${code}`);
-    const data = (await res.json())[0];
-    const cur = data.currencies ? Object.values(data.currencies)[0] : {};
-    countryData = {
-      name: data.name.common,
-      capital: data.capital?.[0] || "N/A",
-      population: data.population,
-      currencyName: cur.name,
-      currencyCode: cur.code || Object.keys(data.currencies || {})[0],
-      lat: data.latlng[0],
-      lon: data.latlng[1],
-    };
+var basemaps = { Streets: streets, Satellite: satellite };
 
-    const rate = await fetch(`https://api.exchangerate.host/latest?base=${countryData.currencyCode}&symbols=USD`);
-    countryData.exchangeRate = (await rate.json()).rates?.USD || null;
+var weatherStationsCluster = L.markerClusterGroup();
+var pointsOfInterestCluster = L.markerClusterGroup();
 
-    const borderRes = await fetch(`https://nominatim.openstreetmap.org/search?country=${encodeURIComponent(data.name.common)}&polygon_geojson=1&format=geojson`);
-    const border = await borderRes.json();
-    if (border.features?.[0]) {
-      borderLayer.clearLayers();
-      borderLayer.addData(border.features[0].geometry);
-      map.flyToBounds(borderLayer.getBounds().pad(0.5));
-    }
-  } catch (e) {
-    alert("Failed to load country data");
-  } finally {
-    hideLoader();
-  }
-}
-
-async function showWeather() {
-  showLoader();
-  try {
-    const [cur, fc] = await Promise.all([
-      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${countryData.lat}&lon=${countryData.lon}&units=metric&appid=${weatherAPIKey}`).then(r => r.json()),
-      fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${countryData.lat}&lon=${countryData.lon}&units=metric&appid=${weatherAPIKey}`).then(r => r.json())
-    ]);
-
-    let html = `
-      <p>Current: <strong>${cur.weather[0].description}</strong>, ${cur.main.temp}°C
-      <img src="https://openweathermap.org/img/wn/${cur.weather[0].icon}@2x.png" /></p>
-      <hr><h6>Next Forecasts:</h6><table class="table">
-      <tr><th>Date</th><th>Temp</th><th>Weather</th><th>Icon</th></tr>`;
-    fc.list.slice(0, 6).forEach(o => {
-      html += `<tr><td>${o.dt_txt}</td><td>${o.main.temp}°C</td><td>${o.weather[0].description}</td>
-      <td><img src="https://openweathermap.org/img/wn/${o.weather[0].icon}@2x.png" /></td></tr>`;
-    });
-    html += "</table>";
-    $("#bodyWeather").html(html);
-    new bootstrap.Modal(document.getElementById("modalWeather")).show();
-  } catch (e) {
-    alert("Failed to load weather");
-  } finally {
-    hideLoader();
-  }
-}
-
-$("#btnLocalWeather").click(() => {
-  if (!navigator.geolocation) return alert("Geolocation not supported");
-  showLoader();
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      $.getJSON("./php/weather.php", {
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
-      }, data => {
-        let html = `
-          <p><strong>Your Current Weather:</strong> ${data.current.weather[0].description}, ${data.current.main.temp}°C
-          <img src="https://openweathermap.org/img/wn/${data.current.weather[0].icon}@2x.png" /></p>
-          <hr><h6>Forecast:</h6><table class="table"><tr><th>Date</th><th>Temp</th><th>Weather</th><th>Icon</th></tr>`;
-        data.forecast.list.slice(0, 6).forEach(f => {
-          html += `<tr><td>${f.dt_txt}</td><td>${f.main.temp}°C</td><td>${f.weather[0].description}</td>
-          <td><img src="https://openweathermap.org/img/wn/${f.weather[0].icon}@2x.png" /></td></tr>`;
-        });
-        html += "</table>";
-        $("#bodyWeather").html(html);
-        new bootstrap.Modal(document.getElementById("modalWeather")).show();
-      }).fail(() => alert("Unable to fetch weather.")).always(hideLoader);
-    },
-    () => {
-      hideLoader();
-      alert("Unable to retrieve your location.");
-    }
-  );
+// Border Layer
+var borderLayer = L.geoJSON(null, {
+  style: {
+    color: "#ff7800",
+    weight: 3,
+    fillColor: "#ffd580",
+    fillOpacity: 0.25,
+  },
 });
 
-$(function () {
-  populateCountries("all");
-  $("#clusterSelect").on("change", function () { populateCountries(this.value); });
-  $("#countrySelect").on("change", function () { loadCountry(this.value); });
-  $("#btnName").click(() => {
-    $("#bodyName").html(`<strong>${countryData.name}</strong><br>Capital: ${countryData.capital}`);
-    new bootstrap.Modal(document.getElementById("modalName")).show();
+function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
+  $.ajax({
+    url: "./php/getWeather.php",
+    method: "POST",
+    data: { lat, lon },
+    success: function (response) {
+      try {
+        const weather = JSON.parse(response);
+        const popupContent = `
+          <b>Weather Info</b><br>
+          🌡 Temp: ${weather.main.temp} °C<br>
+          💨 Wind: ${weather.wind.speed} m/s<br>
+          ☁ ${weather.weather[0].description}
+        `;
+        L.popup().setLatLng([lat, lon]).setContent(popupContent).openOn(map);
+
+        if (showInModal) {
+          const tableRows = `
+            <tr>
+              <td class="text-center"><i class="fa-solid fa-temperature-half fa-xl text-success"></i></td>
+              <td>Temperature</td>
+              <td class="text-end">${weather.main.temp} °C</td>
+            </tr>
+            <tr>
+              <td class="text-center"><i class="fa-solid fa-wind fa-xl text-success"></i></td>
+              <td>Wind Speed</td>
+              <td class="text-end">${weather.wind.speed} m/s</td>
+            </tr>
+            <tr>
+              <td class="text-center"><i class="fa-solid fa-cloud fa-xl text-success"></i></td>
+              <td>Condition</td>
+              <td class="text-end text-capitalize">${weather.weather[0].description}</td>
+            </tr>
+          `;
+          $(".modal-body table").html(tableRows);
+          $("#exampleModal").modal("show");
+        }
+      } catch {
+        alert("Failed to parse weather data.");
+      }
+    },
+    error: function () {
+      alert("Failed to fetch weather data.");
+    },
   });
-  $("#btnPop").click(() => {
-    $("#bodyPop").text(`Population: ${countryData.population.toLocaleString()}`);
-    new bootstrap.Modal(document.getElementById("modalPop")).show();
+}
+
+function addMarkersToClusters() {
+  if (!userLat || !userLng) return;
+
+  const weatherStations = [
+    { lat: userLat + 0.1, lon: userLng + 0.1, label: "Station A" },
+    { lat: userLat - 0.1, lon: userLng - 0.1, label: "Station B" },
+    { lat: userLat + 0.2, lon: userLng - 0.2, label: "Station C" },
+  ];
+
+  const pointsOfInterest = [
+    { lat: userLat + 0.15, lon: userLng + 0.05, label: "Museum" },
+    { lat: userLat - 0.05, lon: userLng + 0.1, label: "Park" },
+  ];
+
+  weatherStations.forEach((station) => {
+    const marker = L.marker([station.lat, station.lon]).bindPopup(
+      `<b>${station.label}</b><br>Weather Station`
+    );
+    weatherStationsCluster.addLayer(marker);
   });
-  $("#btnCurrency").click(() => {
-    $("#bodyCurrency").html(`Currency: ${countryData.currencyName} (${countryData.currencyCode})<br>1 ${countryData.currencyCode} ≈ ${countryData.exchangeRate?.toFixed(4) || "N/A"} USD`);
-    new bootstrap.Modal(document.getElementById("modalCurrency")).show();
+
+  pointsOfInterest.forEach((poi) => {
+    const marker = L.marker([poi.lat, poi.lon]).bindPopup(
+      `<b>${poi.label}</b><br>Point of Interest`
+    );
+    pointsOfInterestCluster.addLayer(marker);
   });
-  $("#btnWeather").click(showWeather);
-  $("#btnWiki").click(() => {
-    const u = `https://en.wikipedia.org/wiki/${encodeURIComponent(countryData.name)}`;
-    $("#bodyWiki").html(`<a href="${u}" target="_blank">${countryData.name} on Wikipedia</a>`);
-    new bootstrap.Modal(document.getElementById("modalWiki")).show();
+
+  map.addLayer(weatherStationsCluster);
+  map.addLayer(pointsOfInterestCluster);
+}
+
+function showInfoModal(title, content) {
+  $("#infoModalTitle").text(title);
+  $("#infoModalBody").html(content);
+  $("#infoModal").modal("show");
+}
+
+async function highlightCountryBorder(countryCode) {
+  try {
+    const names = {
+      uk: "United Kingdom",
+      us: "United States",
+      jp: "Japan",
+      au: "Australia",
+      in: "India",
+    };
+    const countryName = names[countryCode];
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?country=${encodeURIComponent(
+        countryName
+      )}&polygon_geojson=1&format=geojson`
+    );
+    const geo = await res.json();
+    if (geo.features && geo.features[0]) {
+      borderLayer.clearLayers();
+      borderLayer.addData(geo.features[0].geometry);
+      map.addLayer(borderLayer);
+      map.fitBounds(borderLayer.getBounds().pad(0.5));
+    }
+  } catch (err) {
+    console.error("Failed to load border:", err);
+  }
+}
+
+$(document).ready(function () {
+  map = L.map("map", { layers: [streets] }).setView([54.5, -4], 6);
+
+  L.control
+    .layers(basemaps, {
+      "Weather Stations": weatherStationsCluster,
+      "Points of Interest": pointsOfInterestCluster,
+    })
+    .addTo(map);
+
+  L.easyButton("fa-cloud-sun", () => {
+    if (userLat && userLng) fetchWeatherAndDisplay(userLat, userLng, true);
+    else alert("User location not found.");
+  }).addTo(map);
+
+  L.easyButton("fa-users", () => {
+    const selected = $("#countrySelect").val();
+    const populations = {
+      uk: "67 million",
+      us: "331 million",
+      jp: "125 million",
+      au: "25 million",
+      in: "1.4 billion",
+    };
+    if (selected && populations[selected]) {
+      showInfoModal(
+        "Population Info",
+        `<p><strong>${selected.toUpperCase()}</strong> has a population of <b>${
+          populations[selected]
+        }</b>.</p>`
+      );
+    } else {
+      alert("Select a country first.");
+    }
+  }).addTo(map);
+
+  L.easyButton("fa-money-bill-wave", () => {
+    const selected = $("#countrySelect").val();
+    const currencies = {
+      uk: "British Pound (GBP)",
+      us: "US Dollar (USD)",
+      jp: "Japanese Yen (JPY)",
+      au: "Australian Dollar (AUD)",
+      in: "Indian Rupee (INR)",
+    };
+    if (selected && currencies[selected]) {
+      showInfoModal(
+        "Currency Info",
+        `<p><strong>${selected.toUpperCase()}</strong> uses the <b>${
+          currencies[selected]
+        }</b>.</p>`
+      );
+    } else {
+      alert("Select a country first.");
+    }
+  }).addTo(map);
+
+  L.easyButton("fa-book-open", () => {
+    const selected = $("#countrySelect").val();
+    if (selected) {
+      showInfoModal(
+        "Wikipedia Info",
+        `<p>Read more about <strong>${selected.toUpperCase()}</strong> on Wikipedia:</p>
+        <a href="https://en.wikipedia.org/wiki/${selected.toUpperCase()}" target="_blank" class="btn btn-sm btn-primary">
+          <i class="fa-brands fa-wikipedia-w"></i> Open Wikipedia
+        </a>`
+      );
+    } else {
+      alert("Select a country first.");
+    }
+  }).addTo(map);
+
+  L.easyButton('<i class="fa-solid fa-location-crosshairs"></i>', () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          map.setView([userLat, userLng], 12);
+          L.marker([userLat, userLng])
+            .addTo(map)
+            .bindPopup("You are here")
+            .openPopup();
+        },
+        () => {
+          alert("Unable to retrieve your location.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  }).addTo(map);
+
+  
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        map.setView([userLat, userLng], 10);
+        L.marker([userLat, userLng])
+          .addTo(map)
+          .bindPopup("You are here")
+          .openPopup();
+        fetchWeatherAndDisplay(userLat, userLng, true);
+        addMarkersToClusters();
+        $("#loader").hide();
+      },
+      () => {
+        userLat = 54.5;
+        userLng = -4;
+        addMarkersToClusters();
+        $("#loader").hide();
+      }
+    );
+  }
+
+  $("#countrySelect").change(function () {
+    const selected = $(this).val();
+    if (selected && countryCoordinates[selected]) {
+      const coords = countryCoordinates[selected];
+      map.setView([coords.lat, coords.lon], 6);
+      highlightCountryBorder(selected);
+    }
   });
 });
