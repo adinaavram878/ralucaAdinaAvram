@@ -1,5 +1,7 @@
-var map;
-var userLat, userLng;
+let map;
+let userLat, userLng;
+let userLocationMarker = null;
+let countryList = [];
 
 const countryCoordinates = {
   uk: { lat: 54.5, lon: -4 },
@@ -9,23 +11,22 @@ const countryCoordinates = {
   in: { lat: 20.6, lon: 78.9 },
 };
 
-var streets = L.tileLayer(
+const streets = L.tileLayer(
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
   { attribution: "Tiles &copy; Esri" }
 );
 
-var satellite = L.tileLayer(
+const satellite = L.tileLayer(
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
   { attribution: "Tiles &copy; Esri" }
 );
 
-var basemaps = { Streets: streets, Satellite: satellite };
+const basemaps = { Streets: streets, Satellite: satellite };
 
-var weatherStationsCluster = L.markerClusterGroup();
-var pointsOfInterestCluster = L.markerClusterGroup();
+const weatherStationsCluster = L.markerClusterGroup();
+const pointsOfInterestCluster = L.markerClusterGroup();
 
-// Border Layer
-var borderLayer = L.geoJSON(null, {
+const borderLayer = L.geoJSON(null, {
   style: {
     color: "#ff7800",
     weight: 3,
@@ -33,6 +34,33 @@ var borderLayer = L.geoJSON(null, {
     fillOpacity: 0.25,
   },
 });
+
+async function highlightCountryBorder(countryCode) {
+  try {
+    const res = await fetch("./php/getCountryBorder.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `code=${encodeURIComponent(countryCode)}`,
+    });
+
+    if (!res.ok) {
+      throw new Error("Country not found");
+    }
+
+    const feature = await res.json();
+    borderLayer.clearLayers();
+    borderLayer.addData(feature);
+    if (map && !map.hasLayer(borderLayer)) {
+      map.addLayer(borderLayer);
+    }
+    map.fitBounds(borderLayer.getBounds().pad(0.5));
+  } catch (err) {
+    console.error("Failed to load border:", err);
+    alert("Failed to load border data.");
+  }
+}
 
 function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
   $.ajax({
@@ -68,7 +96,7 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
               <td class="text-end text-capitalize">${weather.weather[0].description}</td>
             </tr>
           `;
-          $(".modal-body table").html(tableRows);
+          $(".modal-body").html(`<table class="table">${tableRows}</table>`);
           $("#exampleModal").modal("show");
         }
       } catch {
@@ -83,6 +111,10 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
 
 function addMarkersToClusters() {
   if (!userLat || !userLng) return;
+
+ 
+  weatherStationsCluster.clearLayers();
+  pointsOfInterestCluster.clearLayers();
 
   const weatherStations = [
     { lat: userLat + 0.1, lon: userLng + 0.1, label: "Station A" },
@@ -109,8 +141,12 @@ function addMarkersToClusters() {
     pointsOfInterestCluster.addLayer(marker);
   });
 
-  map.addLayer(weatherStationsCluster);
-  map.addLayer(pointsOfInterestCluster);
+  if (map && !map.hasLayer(weatherStationsCluster)) {
+    map.addLayer(weatherStationsCluster);
+  }
+  if (map && !map.hasLayer(pointsOfInterestCluster)) {
+    map.addLayer(pointsOfInterestCluster);
+  }
 }
 
 function showInfoModal(title, content) {
@@ -119,34 +155,51 @@ function showInfoModal(title, content) {
   $("#infoModal").modal("show");
 }
 
-async function highlightCountryBorder(countryCode) {
-  try {
-    const names = {
-      uk: "United Kingdom",
-      us: "United States",
-      jp: "Japan",
-      au: "Australia",
-      in: "India",
-    };
-    const countryName = names[countryCode];
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?country=${encodeURIComponent(
-        countryName
-      )}&polygon_geojson=1&format=geojson`
-    );
-    const geo = await res.json();
-    if (geo.features && geo.features[0]) {
-      borderLayer.clearLayers();
-      borderLayer.addData(geo.features[0].geometry);
-      map.addLayer(borderLayer);
-      map.fitBounds(borderLayer.getBounds().pad(0.5));
-    }
-  } catch (err) {
-    console.error("Failed to load border:", err);
+function populateCountryDropdown() {
+  $.ajax({
+    url: "./php/getCountryList.php",
+    method: "GET",
+    dataType: "json",
+    success: function (countries) {
+      countryList = countries;
+      const $select = $("#countrySelect");
+
+      $select.empty();
+      $select.append(
+        '<option value="" disabled selected>-- Select a country --</option>'
+      );
+
+      countries.sort((a, b) => a.name.localeCompare(b.name));
+
+      countries.forEach((country) => {
+        $select.append(
+          $("<option>", {
+            value: country.code.toLowerCase(),
+            text: country.name,
+          })
+        );
+      });
+    },
+    error: function () {
+      alert("Failed to load country list.");
+    },
+  });
+}
+
+function setUserLocationMarker(lat, lng) {
+  if (userLocationMarker) {
+    userLocationMarker.setLatLng([lat, lng]);
+  } else {
+    userLocationMarker = L.marker([lat, lng])
+      .addTo(map)
+      .bindPopup("You are here");
   }
+  userLocationMarker.openPopup();
 }
 
 $(document).ready(function () {
+  populateCountryDropdown();
+
   map = L.map("map", { layers: [streets] }).setView([54.5, -4], 6);
 
   L.control
@@ -156,9 +209,12 @@ $(document).ready(function () {
     })
     .addTo(map);
 
-  L.easyButton("fa-cloud-sun", () => {
-    if (userLat && userLng) fetchWeatherAndDisplay(userLat, userLng, true);
-    else alert("User location not found.");
+  L.easyButton("fa-info fa-xl", function () {
+    if (userLat && userLng) {
+      fetchWeatherAndDisplay(userLat, userLng, true);
+    } else {
+      alert("User location not found.");
+    }
   }).addTo(map);
 
   L.easyButton("fa-users", () => {
@@ -206,13 +262,23 @@ $(document).ready(function () {
   L.easyButton("fa-book-open", () => {
     const selected = $("#countrySelect").val();
     if (selected) {
-      showInfoModal(
-        "Wikipedia Info",
-        `<p>Read more about <strong>${selected.toUpperCase()}</strong> on Wikipedia:</p>
-        <a href="https://en.wikipedia.org/wiki/${selected.toUpperCase()}" target="_blank" class="btn btn-sm btn-primary">
-          <i class="fa-brands fa-wikipedia-w"></i> Open Wikipedia
-        </a>`
+      const country = countryList.find(
+        (c) => c.code.toLowerCase() === selected.toLowerCase()
       );
+
+      if (country) {
+        showInfoModal(
+          "Wikipedia Info",
+          `<p>Read more about <strong>${country.name}</strong> on Wikipedia:</p>
+           <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(
+             country.name
+           )}" target="_blank" class="btn btn-sm btn-primary">
+             <i class="fa-brands fa-wikipedia-w"></i> Open Wikipedia
+           </a>`
+        );
+      } else {
+        alert("Country data not found.");
+      }
     } else {
       alert("Select a country first.");
     }
@@ -225,10 +291,7 @@ $(document).ready(function () {
           userLat = pos.coords.latitude;
           userLng = pos.coords.longitude;
           map.setView([userLat, userLng], 12);
-          L.marker([userLat, userLng])
-            .addTo(map)
-            .bindPopup("You are here")
-            .openPopup();
+          setUserLocationMarker(userLat, userLng);
         },
         () => {
           alert("Unable to retrieve your location.");
@@ -246,28 +309,30 @@ $(document).ready(function () {
         userLat = pos.coords.latitude;
         userLng = pos.coords.longitude;
         map.setView([userLat, userLng], 10);
-        L.marker([userLat, userLng])
-          .addTo(map)
-          .bindPopup("You are here")
-          .openPopup();
+        setUserLocationMarker(userLat, userLng);
         fetchWeatherAndDisplay(userLat, userLng, true);
         addMarkersToClusters();
         $("#loader").hide();
       },
       () => {
+        
         userLat = 54.5;
         userLng = -4;
         addMarkersToClusters();
         $("#loader").hide();
       }
     );
+  } else {
+ 
+    userLat = 54.5;
+    userLng = -4;
+    addMarkersToClusters();
+    $("#loader").hide();
   }
 
   $("#countrySelect").change(function () {
     const selected = $(this).val();
-    if (selected && countryCoordinates[selected]) {
-      const coords = countryCoordinates[selected];
-      map.setView([coords.lat, coords.lon], 6);
+    if (selected) {
       highlightCountryBorder(selected);
     }
   });
