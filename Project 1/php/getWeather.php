@@ -1,11 +1,32 @@
 <?php
+header('Content-Type: application/json');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lat = filter_var($_POST['lat'], FILTER_VALIDATE_FLOAT);
     $lon = filter_var($_POST['lon'], FILTER_VALIDATE_FLOAT);
 
     if ($lat !== false && $lon !== false) {
-        $apiKey = "60b5e9ec6028dc5a8c9ad0e59fbedea2";
-        $url = "https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lon}&appid={$apiKey}&units=metric";
+        
+        $configPath = __DIR__ . '/data/config.json';
+        $configData = file_get_contents($configPath);
+
+        if ($configData === false) {
+            http_response_code(500);
+            echo json_encode(["error" => "Failed to load configuration"]);
+            exit;
+        }
+
+        $config = json_decode($configData, true);
+        $apiKey = $config['openWeatherMapApiKey'] ?? null;
+
+        if (!$apiKey) {
+            http_response_code(500);
+            echo json_encode(["error" => "Missing API key in config"]);
+            exit;
+        }
+
+        
+        $url = "https://api.openweathermap.org/data/2.5/forecast?lat={$lat}&lon={$lon}&appid={$apiKey}&units=metric";
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -27,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(["error" => "Invalid or missing coordinates"]);
     }
 } else {
-    http_response_code(405); 
+    http_response_code(405);
     echo json_encode(["error" => "Invalid request method"]);
 }
-?>
