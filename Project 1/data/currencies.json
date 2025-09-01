@@ -1,0 +1,22 @@
+{
+  "uk": {
+    "currency": "British Pound (GBP)",
+    "rate": 1.27
+  },
+  "us": {
+    "currency": "US Dollar (USD)",
+    "rate": 1.0
+  },
+  "jp": {
+    "currency": "Japanese Yen (JPY)",
+    "rate": 0.0068
+  },
+  "au": {
+    "currency": "Australian Dollar (AUD)",
+    "rate": 0.66
+  },
+  "in": {
+    "currency": "Indian Rupee (INR)",
+    "rate": 0.012
+  }
+}
