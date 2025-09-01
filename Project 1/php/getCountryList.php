@@ -1,33 +1,38 @@
 <?php
-
-error_reporting(0);
-ini_set('display_errors', 0);
-
 header('Content-Type: application/json');
 
-$geojsonPath = '../data/countries.geojson';
+
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
+
+$geojsonPath = __DIR__ . '/data/countries.geojson';
+
+
 if (!file_exists($geojsonPath)) {
     http_response_code(500);
-    echo json_encode(['error' => "GeoJSON file not found"]);
+    echo json_encode(['error' => 'GeoJSON file not found']);
     exit;
 }
+
 
 $geojson = file_get_contents($geojsonPath);
 if ($geojson === false) {
     http_response_code(500);
-    echo json_encode(['error' => "Failed to read GeoJSON file"]);
+    echo json_encode(['error' => 'Failed to read GeoJSON file']);
     exit;
 }
+
 
 $data = json_decode($geojson, true);
-if ($data === null) {
+if (!is_array($data) || !isset($data['features'])) {
     http_response_code(500);
-    echo json_encode(['error' => "Failed to decode GeoJSON file"]);
+    echo json_encode(['error' => 'Invalid GeoJSON format']);
     exit;
 }
 
-$countries = [];
 
+$countries = [];
 foreach ($data['features'] as $feature) {
     $code = strtolower($feature['properties']['ISO_A2'] ?? '');
     $name = $feature['properties']['ADMIN'] ?? '';
@@ -40,5 +45,8 @@ foreach ($data['features'] as $feature) {
     }
 }
 
+
+usort($countries, fn($a, $b) => strcmp($a['name'], $b['name']));
+
+
 echo json_encode($countries);
-?>
