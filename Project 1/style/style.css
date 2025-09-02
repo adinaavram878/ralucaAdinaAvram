@@ -61,3 +61,8 @@ html, body {
   font-size: 14px;
   padding: 2px 5px;
 }
+
+
+#infoModalBody input {
+  max-width: 200px;
+}
