@@ -31,29 +31,225 @@ function fetchWeatherAndDisplay(lat, lng, showPopup) {
 }
 
 function fetchWeatherForecast(lat, lng) {
-  console.log(`fetchWeatherForecast called with lat=${lat}, lng=${lng}`);
  
+  const modalBody = $("#exampleModal .modal-body table");
+  modalBody.html(
+    `<tr><td colspan="3" class="text-center">Loading forecast...</td></tr>`
+  );
+
+  
+  const modal = new bootstrap.Modal(document.getElementById("exampleModal"));
+  modal.show();
+
+  
+  $.post("php/getWeather.php", { lat, lon: lng }, function (data) {
+    if (!data || !data.list || data.list.length === 0) {
+      modalBody.html(
+        `<tr><td colspan="3" class="text-center text-danger">No forecast data available.</td></tr>`
+      );
+      return;
+    }
+
+    
+    const rows = data.list
+      .filter((_, i) => i % 8 === 0)
+      .slice(0, 5)
+      .map((entry) => {
+        const date = new Date(entry.dt * 1000).toLocaleDateString();
+        const temp = `${Math.round(entry.main.temp)}°C`;
+        const icon = `<img src="https://openweathermap.org/img/wn/${entry.weather[0].icon}@2x.png" alt="${entry.weather[0].main}" width="50">`;
+        return `<tr><td>${date}</td><td>${temp}</td><td>${icon}</td></tr>`;
+      });
+
+    
+    modalBody.html(`
+      <thead>
+        <tr><th>Date</th><th>Temperature</th><th>Icon</th></tr>
+      </thead>
+      <tbody>
+        ${rows.join("")}
+      </tbody>
+    `);
+  }).fail(function () {
+    modalBody.html(
+      `<tr><td colspan="3" class="text-center text-danger">Failed to fetch weather data.</td></tr>`
+    );
+  });
 }
+
 
 function fetchCountryInfo(code) {
-  console.log(`fetchCountryInfo called with code=${code}`);
+  
+  $("#infoModalTitle").text("Country Information");
+  $("#infoModalBody").html(
+    '<div class="text-center">Loading country information...</div>'
+  );
 
+
+  const infoModal = new bootstrap.Modal(document.getElementById("infoModal"));
+  infoModal.show();
+
+
+  $.post("php/getCountryInfo.php", { code }, function (data) {
+    if (!data || Object.keys(data).length === 0) {
+      $("#infoModalBody").html(
+        '<div class="text-danger text-center">No country information found.</div>'
+      );
+      return;
+    }
+
+
+    const html = `
+      <h5>${data.name || "Unknown Country"}</h5>
+      <p><strong>Capital:</strong> ${data.capital || "N/A"}</p>
+      <p><strong>Region:</strong> ${data.region || "N/A"}</p>
+      <p><strong>Subregion:</strong> ${data.subregion || "N/A"}</p>
+      <p><strong>Population:</strong> ${
+        data.population?.toLocaleString() || "N/A"
+      }</p>
+      <p><strong>Area:</strong> ${
+        data.area ? `${data.area.toLocaleString()} km²` : "N/A"
+      }</p>
+      <p><strong>Languages:</strong> ${
+        Array.isArray(data.languages) ? data.languages.join(", ") : "N/A"
+      }</p>
+    `;
+
+    $("#infoModalBody").html(html);
+  }).fail(function () {
+    $("#infoModalBody").html(
+      '<div class="text-danger text-center">Failed to load country information.</div>'
+    );
+  });
 }
+
 
 function fetchCurrencyInfo(code) {
-  console.log(`fetchCurrencyInfo called with code=${code}`);
+  $("#infoModalTitle").text("Currency Converter");
+  $("#infoModalBody").html(
+    '<div class="text-center">Loading currency info...</div>'
+  );
 
+  const infoModal = new bootstrap.Modal(document.getElementById("infoModal"));
+  infoModal.show();
+
+  $.post("php/getCurrency.php", { code }, function (data) {
+    if (!data || !data.currency || !data.rate) {
+      $("#infoModalBody").html(
+        '<div class="text-danger text-center">Currency information not found.</div>'
+      );
+      return;
+    }
+
+    const html = `
+      <div class="mb-2">
+        <p><strong>Currency:</strong> ${data.currency}</p>
+        <p><strong>Exchange Rate:</strong> 1 USD = ${data.rate} ${data.currency}</p>
+      </div>
+      <div class="form-group">
+        <label for="usdInput">Amount in USD:</label>
+        <input type="number" id="usdInput" class="form-control form-control-sm" placeholder="Enter USD amount" />
+      </div>
+      <div class="mt-2">
+        <strong>Converted Amount:</strong> <span id="convertedAmount">—</span>
+      </div>
+    `;
+
+    $("#infoModalBody").html(html);
+
+    
+    $("#usdInput").on("input", function () {
+      const usd = parseFloat($(this).val());
+      if (!isNaN(usd)) {
+        const converted = usd * data.rate;
+        $("#convertedAmount").text(`${converted.toFixed(2)} ${data.currency}`);
+      } else {
+        $("#convertedAmount").text("—");
+      }
+    });
+  }).fail(function () {
+    $("#infoModalBody").html(
+      '<div class="text-danger text-center">Failed to load currency info.</div>'
+    );
+  });
 }
+
 
 function fetchWikipediaInfo(code) {
-  console.log(`fetchWikipediaInfo called with code=${code}`);
- 
+  $("#infoModalTitle").text("Wikipedia Summary");
+  $("#infoModalBody").html('<div class="text-center">Loading summary...</div>');
+
+  const infoModal = new bootstrap.Modal(document.getElementById("infoModal"));
+  infoModal.show();
+
+  $.post("php/getWikipedia.php", { code }, function (data) {
+    if (data.error) {
+      $("#infoModalBody").html(
+        `<div class="text-danger text-center">${data.error}</div>`
+      );
+      return;
+    }
+
+    const html = `
+      <p>${data.summary}</p>
+      <a href="${data.url}" target="_blank" class="btn btn-sm btn-primary">
+        <i class="fa-brands fa-wikipedia-w"></i> Read Full Article
+      </a>
+    `;
+
+    $("#infoModalBody").html(html);
+  }).fail(function () {
+    $("#infoModalBody").html(
+      '<div class="text-danger text-center">Failed to fetch Wikipedia summary.</div>'
+    );
+  });
 }
 
+
 function fetchNewsHeadlines(code) {
-  console.log(`fetchNewsHeadlines called with code=${code}`);
- 
+  $("#newsModalBody").html('<div class="text-center">Loading news...</div>');
+  const newsModal = new bootstrap.Modal(document.getElementById("newsModal"));
+  newsModal.show();
+
+  $.post("php/getNews.php", { code }, function (data) {
+    if (data.error || !data.articles || data.articles.length === 0) {
+      $("#newsModalBody").html(
+        '<div class="text-center text-danger">No news available for this country.</div>'
+      );
+      return;
+    }
+
+    const headlines = data.articles
+      .slice(0, 5)
+      .map((article) => {
+        const image = article.urlToImage
+          ? `<img src="${article.urlToImage}" alt="News image" class="img-fluid mb-2" style="max-height:150px;">`
+          : "";
+        return `
+        <div class="mb-4">
+          ${image}
+          <h6><a href="${
+            article.url
+          }" target="_blank" class="text-decoration-none">${
+          article.title
+        }</a></h6>
+          <p class="small text-muted">${
+            article.source.name || "Source Unknown"
+          }</p>
+        </div>
+        <hr/>
+      `;
+      })
+      .join("");
+
+    $("#newsModalBody").html(headlines);
+  }).fail(() => {
+    $("#newsModalBody").html(
+      '<div class="text-danger text-center">Failed to load news data.</div>'
+    );
+  });
 }
+
 
 function addMarkersToClusters() {
   console.log("addMarkersToClusters called");
@@ -265,6 +461,16 @@ $(document).ready(function () {
       alert("Select a country first.");
     }
   }).addTo(map);
+
+  L.easyButton("fa-newspaper", () => {
+    const selected = $("#countrySelect").val();
+     if (selected) {
+        fetchNewsHeadlines(selected);
+      } else {
+            alert("Please select a country first.");
+    }
+  }).addTo(map);
+
 
   L.easyButton('<i class="fa-solid fa-location-crosshairs"></i>', () => {
     if (navigator.geolocation) {
