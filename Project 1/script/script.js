@@ -99,21 +99,26 @@ function fetchCountryInfo(code) {
     }
 
 
-    const html = `
-      <h5>${data.name || "Unknown Country"}</h5>
-      <p><strong>Capital:</strong> ${data.capital || "N/A"}</p>
-      <p><strong>Region:</strong> ${data.region || "N/A"}</p>
-      <p><strong>Subregion:</strong> ${data.subregion || "N/A"}</p>
-      <p><strong>Population:</strong> ${
-        data.population?.toLocaleString() || "N/A"
-      }</p>
-      <p><strong>Area:</strong> ${
-        data.area ? `${data.area.toLocaleString()} km²` : "N/A"
-      }</p>
-      <p><strong>Languages:</strong> ${
-        Array.isArray(data.languages) ? data.languages.join(", ") : "N/A"
-      }</p>
-    `;
+   const html = `
+  <h5>${data.name || "Unknown Country"}</h5>
+  <p><strong>Capital:</strong> ${data.capital || "N/A"}</p>
+  <p><strong>Region:</strong> ${data.region || "N/A"}</p>
+  <p><strong>Subregion:</strong> ${data.subregion || "N/A"}</p>
+  <p><strong>Continent:</strong> ${data.continent || "N/A"}</p>
+  <p><strong>City (OpenCage):</strong> ${data.city || "N/A"}</p>
+  <p><strong>State (OpenCage):</strong> ${data.state || "N/A"}</p>
+  <p><strong>Postal Code:</strong> ${data.postcode || "N/A"}</p>
+  <p><strong>Population:</strong> ${
+    data.population?.toLocaleString() || "N/A"
+  }</p>
+  <p><strong>Area:</strong> ${
+    data.area ? `${data.area.toLocaleString()} km²` : "N/A"
+  }</p>
+  <p><strong>Languages:</strong> ${
+    Array.isArray(data.languages) ? data.languages.join(", ") : "N/A"
+  }</p>
+`;
+
 
     $("#infoModalBody").html(html);
   }).fail(function () {
