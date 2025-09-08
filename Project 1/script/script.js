@@ -5,6 +5,35 @@ let countryList = [];
 let countriesGeoJSON = null;
 let selectedCountryLayer = null;
 
+function showToast(message, type = "info") {
+  const toastId = `toast-${Date.now()}`;
+  const iconMap = {
+    info: "fa-info-circle",
+    success: "fa-check-circle",
+    warning: "fa-exclamation-triangle",
+    danger: "fa-times-circle",
+  };
+  const icon = iconMap[type] || iconMap.info;
+
+  const toastHTML = `
+    <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0 mb-2 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fa ${icon} me-2"></i>${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+
+  $("#toast-container").append(toastHTML);
+
+  setTimeout(() => {
+    $(`#${toastId}`).remove();
+  }, 5000);
+}
+
+
 const streets = L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   { attribution: "© OpenStreetMap contributors" }
@@ -39,7 +68,7 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
     dataType: "json",
     success: function (weather) {
       if (!weather || !weather.main) {
-        alert("Weather data not available.");
+        showToast("Weather data not available.", "warning");
         return;
       }
 
@@ -74,7 +103,7 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
       }
     },
     error: function () {
-      alert("Failed to fetch weather data.");
+      showToast("Failed to fetch weather data.", "danger");
     },
   });
 }
@@ -151,7 +180,7 @@ function populateCountryDropdown() {
       );
       countryList.push(country);
     });
-  }).fail(() => alert("Failed to load countries.geojson."));
+  }).fail(() => showToast("Failed to load countries.geojson.", "danger"));
 }
 
 function highlightCountryBorder(code) {
@@ -163,7 +192,7 @@ function highlightCountryBorder(code) {
   });
 
   if (!feature || !feature.geometry) {
-    alert("No coordinates found for this country.");
+    showToast("No coordinates found for this country.", "warning");
     return;
   }
 
@@ -198,16 +227,14 @@ $(document).ready(function () {
     })
     .addTo(map);
 
-  
   L.easyButton("fa-info fa-xl", function () {
     if (userLat && userLng) {
       fetchWeatherAndDisplay(userLat, userLng, true);
     } else {
-      alert("User location not found.");
+      showToast("User location not found.", "warning");
     }
   }).addTo(map);
 
- 
   L.easyButton("fa-users", () => {
     const selected = $("#countrySelect").val();
     const populations = {
@@ -225,7 +252,7 @@ $(document).ready(function () {
         }</b>.</p>`
       );
     } else {
-      alert("Select a country first.");
+      showToast("Select a country first.", "info");
     }
   }).addTo(map);
 
@@ -236,26 +263,24 @@ $(document).ready(function () {
         "./php/getCurrency.php",
         { code: selected.toUpperCase() },
         function (data) {
-          console.log("Currency response:", data); 
-
           if (data && data.currency && data.rate) {
             showInfoModal(
               "Currency Info",
               `<div class="table-responsive mb-3">
-             <table class="table table-bordered table-sm">
-               <tbody>
-                 <tr><th>Currency</th><td>${data.currency}</td></tr>
-                 <tr><th>Exchange Rate</th><td>1 USD = ${data.rate} ${data.currency}</td></tr>
-               </tbody>
-             </table>
-           </div>
-           <div class="form-group">
-             <label for="usdInput"><strong>Amount in USD:</strong></label>
-             <input type="number" id="usdInput" class="form-control form-control-sm" placeholder="Enter USD amount" />
-           </div>
-           <div class="mt-3">
-             <strong>Converted Amount:</strong> <span id="convertedAmount">—</span>
-           </div>`
+               <table class="table table-bordered table-sm">
+                 <tbody>
+                   <tr><th>Currency</th><td>${data.currency}</td></tr>
+                   <tr><th>Exchange Rate</th><td>1 USD = ${data.rate} ${data.currency}</td></tr>
+                 </tbody>
+               </table>
+             </div>
+             <div class="form-group">
+               <label for="usdInput"><strong>Amount in USD:</strong></label>
+               <input type="number" id="usdInput" class="form-control form-control-sm" placeholder="Enter USD amount" />
+             </div>
+             <div class="mt-3">
+               <strong>Converted Amount:</strong> <span id="convertedAmount">—</span>
+             </div>`
             );
 
             $("#usdInput").on("input", function () {
@@ -270,21 +295,16 @@ $(document).ready(function () {
               }
             });
           } else {
-            alert("Currency data not available.");
+            showToast("Currency data not available.", "warning");
           }
         },
         "json"
-      ).fail((xhr, status, error) => {
-        console.error("Currency AJAX error:", status, error, xhr.responseText); // 👈 Debug line
-        alert("Failed to load currency info.");
-      });
+      ).fail(() => showToast("Failed to load currency info.", "danger"));
     } else {
-      alert("Select a country first.");
+      showToast("Select a country first.", "info");
     }
   }).addTo(map);
 
-
-  
   L.easyButton("fa-book-open", () => {
     const selected = $("#countrySelect").val();
     if (selected) {
@@ -302,13 +322,12 @@ $(document).ready(function () {
            </a>`
         );
       } else {
-        alert("Country data not found.");
+        showToast("Country data not found.", "warning");
       }
     } else {
-      alert("Select a country first.");
+      showToast("Select a country first.", "info");
     }
   }).addTo(map);
-
 
   L.easyButton('<i class="fa-solid fa-location-crosshairs"></i>', () => {
     if (navigator.geolocation) {
@@ -319,14 +338,13 @@ $(document).ready(function () {
           map.setView([userLat, userLng], 12);
           setUserLocationMarker(userLat, userLng);
         },
-        () => alert("Unable to retrieve your location.")
+        () => showToast("Unable to retrieve your location.", "warning")
       );
     } else {
-      alert("Geolocation is not supported by your browser.");
+      showToast("Geolocation is not supported by your browser.", "danger");
     }
   }).addTo(map);
 
-  
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -347,7 +365,6 @@ $(document).ready(function () {
     );
   }
 
-  
   $("#countrySelect").change(function () {
     const selected = $(this).val();
     if (selected) {
