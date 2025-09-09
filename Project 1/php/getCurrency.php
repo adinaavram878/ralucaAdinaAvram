@@ -1,12 +1,11 @@
-
 <?php
+
 
 header('Content-Type: application/json');
 
 
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/logs/debug.log'); 
-error_reporting(E_ALL); 
 
 
 function log_debug($message) {
@@ -20,6 +19,7 @@ if (!isset($_POST['code'])) {
     exit;
 }
 
+
 $code = strtoupper(trim($_POST['code']));
 log_debug("Received code: $code");
 
@@ -29,6 +29,7 @@ $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $restCountriesUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
+
 
 if (curl_errno($ch)) {
     $error = curl_error($ch);
@@ -47,6 +48,7 @@ if ($countries === null) {
     exit;
 }
 
+
 $currencyCode = null;
 foreach ($countries as $country) {
     if (isset($country['cca3']) && strtoupper($country['cca3']) === $code) {
@@ -54,6 +56,8 @@ foreach ($countries as $country) {
             $currencyKeys = array_keys($country['currencies']);
             $currencyCode = $currencyKeys[0];
             log_debug("Found currency code: $currencyCode for country code: $code");
+        } else {
+            log_debug("No currencies found for country: " . ($country['name']['common'] ?? 'Unknown'));
         }
         break;
     }
@@ -71,6 +75,7 @@ $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $exchangeUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $exchangeResponse = curl_exec($ch);
+
 
 if (curl_errno($ch)) {
     $error = curl_error($ch);
@@ -90,8 +95,6 @@ if (!isset($exchangeData['rates'][$currencyCode])) {
 }
 
 
-
-
 $rate = $exchangeData['rates'][$currencyCode];
 log_debug("Exchange rate for $currencyCode: $rate");
 
@@ -99,19 +102,3 @@ echo json_encode([
     'currency' => $currencyCode,
     'rate' => $rate
 ]);
-
-log_debug("Checking country: " . ($country['cca3'] ?? 'N/A'));
-
-if (isset($country['cca3']) && strtoupper($country['cca3']) === $code) {
-    log_debug("Matched country: " . $country['name']['common']);
-
-    if (isset($country['currencies']) && is_array($country['currencies'])) {
-        log_debug("Currencies found: " . json_encode($country['currencies']));
-        $currencyKeys = array_keys($country['currencies']);
-        $currencyCode = $currencyKeys[0];
-        log_debug("Selected currency: $currencyCode");
-    } else {
-        log_debug("No currencies field found for country: " . $country['name']['common']);
-    }
-    break;
-}
