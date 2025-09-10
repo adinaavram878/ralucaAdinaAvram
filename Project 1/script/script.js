@@ -308,26 +308,13 @@ $(document).ready(function () {
   L.easyButton("fa-book-open", () => {
     const selected = $("#countrySelect").val();
     if (selected) {
-      const country = countryList.find(
-        (c) => c.code.toLowerCase() === selected.toLowerCase()
-      );
-      if (country) {
-        showInfoModal(
-          "Wikipedia Info",
-          `<p>Read more about <strong>${country.name}</strong> on Wikipedia:</p>
-           <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(
-             country.name
-           )}" target="_blank" class="btn btn-sm btn-primary">
-             <i class="fa-brands fa-wikipedia-w"></i> Open Wikipedia
-           </a>`
-        );
-      } else {
-        showToast("Country data not found.", "warning");
-      }
+      $("#wikiModal").modal("show");
     } else {
       showToast("Select a country first.", "info");
     }
   }).addTo(map);
+
+
 
   L.easyButton('<i class="fa-solid fa-location-crosshairs"></i>', () => {
     if (navigator.geolocation) {
@@ -371,4 +358,23 @@ $(document).ready(function () {
       highlightCountryBorder(selected);
     }
   });
+});
+$("#wikiModal").on("show.bs.modal", function () {
+  const selected = $("#countrySelect").val();
+  const country = countryList.find(
+    (c) => c.code.toLowerCase() === selected.toLowerCase()
+  );
+
+  if (country) {
+    const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(
+      country.name
+    )}`;
+    $("#wikiInfoText").html(
+      `Read more about <strong>${country.name}</strong> on Wikipedia:`
+    );
+    $("#wikiLink").attr("href", wikiUrl).removeClass("d-none");
+  } else {
+    $("#wikiInfoText").text("Country data not found.");
+    $("#wikiLink").addClass("d-none");
+  }
 });
