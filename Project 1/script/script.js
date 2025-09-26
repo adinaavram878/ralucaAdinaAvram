@@ -381,7 +381,7 @@ $(document).ready(function () {
         userLng = pos.coords.longitude;
         map.setView([userLat, userLng], 10);
         setUserLocationMarker(userLat, userLng);
-        fetchWeatherAndDisplay(userLat, userLng, true);
+        fetchWeatherAndDisplay(userLat, userLng, false);
         addMarkersToClusters();
         $("#loader").hide();
       },
