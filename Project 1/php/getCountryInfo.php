@@ -1,42 +1,63 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=UTF-8');
 
-$code = strtolower($_POST['code'] ?? '');
 
-if (!$code) {
-    http_response_code(400);
-    echo json_encode(['error' => 'No country code provided']);
-    exit;
+if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
+    $lat = $_POST['latitude'];
+    $lon = $_POST['longitude'];
+
+    $apiKey = "Yb4b47890259a41f5a7c00e98f2b2f15b";
+    $url = "https://api.opencagedata.com/geocode/v1/json?q=" . urlencode($lat) . "+" . urlencode($lon) . "&key=" . urlencode($apiKey);
+
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_URL, $url);
+
+    $response = curl_exec($ch);
+
+    if ($response === false) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'cURL Error: ' . curl_error($ch)
+        ]);
+        curl_close($ch);
+        exit;
+    }
+
+    curl_close($ch);
+    $data = json_decode($response, true);
+
+    if (
+        isset($data['results'][0]['components']) &&
+        !empty($data['results'][0]['components'])
+    ) {
+        $components = $data['results'][0]['components'];
+        $country = $components['country'] ?? 'N/A';
+        $countryCode = $components['ISO_3166-1_alpha-2'] ?? 'N/A';
+        $continent = $components['continent'] ?? 'N/A';
+        $timezone = $data['results'][0]['annotations']['timezone']['name'] ?? 'N/A';
+
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'latitude' => $lat,
+                'longitude' => $lon,
+                'country' => $country,
+                'countryCode' => $countryCode
+            ]
+        ]);
+    } else {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Location data not found or incomplete.'
+        ]);
+    }
+
+} else {
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Required POST parameters: latitude and longitude.'
+    ]);
 }
-
-
-$apiUrl = "https://restcountries.com/v3.1/alpha/" . urlencode($code);
-$response = file_get_contents($apiUrl);
-
-if ($response === false) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to fetch country data from REST Countries API']);
-    exit;
-}
-
-$data = json_decode($response, true);
-
-if (!is_array($data) || empty($data[0])) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Country not found']);
-    exit;
-}
-
-$country = $data[0];
-
-
-echo json_encode([
-    'name'       => $country['name']['common'] ?? 'Unknown',
-    'capital'    => $country['capital'][0] ?? 'N/A',
-    'region'     => $country['region'] ?? 'N/A',
-    'subregion'  => $country['subregion'] ?? 'N/A',
-    'population' => $country['population'] ?? null,
-    'area'       => $country['area'] ?? null,
-    'languages'  => isset($country['languages']) ? array_values($country['languages']) : [],
-    'flag'       => $country['flags']['png'] ?? null
-]);
+?>
