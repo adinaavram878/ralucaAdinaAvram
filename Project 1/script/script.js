@@ -159,7 +159,7 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
 }
 
 
-function get_country_info(lat, lon) {
+/*function get_country_info(lat, lon) {
   const apiKey = "Yb4b47890259a41f5a7c00e98f2b2f15b"; 
 
   const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}`;
@@ -187,6 +187,29 @@ function get_country_info(lat, lon) {
    
   });
 }
+
+*/
+
+function get_country_info(lat, lon) {
+  $.ajax({
+    url: "./php/getCountryInfo.php", 
+    method: "POST",
+    data: {
+      latitude: lat,
+      longitude: lon,
+    },
+    success: function (response) {
+     
+       const { country, countryCode } = response.data;
+       getWeather(lat, lon);
+       getNews(countryCode);
+       getWikipedia(country);
+    },
+    
+  });
+}
+
+
 
 function getWikipedia(countryName) {
   const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
