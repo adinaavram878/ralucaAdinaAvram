@@ -190,24 +190,46 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
 
 */
 
-function get_country_info(lat, lon) {
+
+ function get_country_info(lat, lon) {
+
   $.ajax({
-    url: "./php/getCountryInfo.php", 
-    method: "POST",
+    type: "POST",
+    url: "./php/getCountryInfo.php",
     data: {
       latitude: lat,
       longitude: lon,
     },
+    dataType: "json",
     success: function (response) {
-     
-       const { country, countryCode } = response.data;
-       getWeather(lat, lon);
-       getNews(countryCode);
-       getWikipedia(country);
+      console.log("Response:", response); 
+
+      
+      $("#statusMessage").text("");
+
+      if (response.status === "ok" && response.data) {
+        const { country, countryCode, latitude, longitude } = response.data;
+
+        
+        $("#modalCountry").text(country);
+        $("#modalCountryCode").text(countryCode);
+        $("#modalLat").text(latitude);
+        $("#modalLon").text(longitude);
+        $("#countryModal").show();
+      } else {
+        $("#statusMessage").text(
+          "⚠️ " + (response.message || "Unable to retrieve country info.")
+        );
+      }
     },
-    
+    error: function (xhr, status, error) {
+      console.error("AJAX error:", error);
+      $("#statusMessage").text("❌ Request failed: " + error);
+    },
   });
-}
+
+ }
+
 
 
 
