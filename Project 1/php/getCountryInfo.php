@@ -7,7 +7,9 @@ if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
     $lon = $_POST['longitude'];
 
     $apiKey = "Yb4b47890259a41f5a7c00e98f2b2f15b";
-    $url = "https://api.opencagedata.com/geocode/v1/json?q=" . urlencode($lat) . "+" . urlencode($lon) . "&key=" . urlencode($apiKey);
+    //$url = "https://api.opencagedata.com/geocode/v1/json?q=" . urlencode($lat) . "+" . urlencode($lon) . "&key=" . urlencode($apiKey);
+    // $url = "https://api.opencagedata.com/geocode/v1/json?q=" . urlencode($lat) . "+" . urlencode($lon) . "&key=" . urlencode($apiKey) . "&language=en&pretty=0";
+     $url = "https://api.opencagedata.com/geocode/v1/json?q=52.5432379,+13.4142133&key=6fb96883b794460eb63bffdab7abd737&language=en&pretty=1";
 
     
     $ch = curl_init();
@@ -36,7 +38,10 @@ if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
         $country = $components['country'] ?? 'N/A';
         $countryCode = $components['ISO_3166-1_alpha-2'] ?? 'N/A';
         $continent = $components['continent'] ?? 'N/A';
-        $timezone = $data['results'][0]['annotations']['timezone']['name'] ?? 'N/A';
+        $timezone = isset($data['results'][0]['annotations']['timezone']['name'])
+    ? $data['results'][0]['annotations']['timezone']['name']
+    : 'N/A';
+
 
         echo json_encode([
             'status' => 'ok',
