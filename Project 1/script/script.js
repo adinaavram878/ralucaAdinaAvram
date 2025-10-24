@@ -195,7 +195,7 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
 
    
     if (selectedCountryCode) {
-      get_country_info_by_code(selectedCountryCode);
+      get_country_info(selectedCountryCode);
     }
   });
 
