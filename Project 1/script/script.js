@@ -190,8 +190,45 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
 
 */
 
+  $("#countrySelect").on("change", function () {
+    const selectedCountryCode = $(this).val();
 
- function get_country_info(lat, lon) {
+   
+    if (selectedCountryCode) {
+      get_country_info_by_code(selectedCountryCode);
+    }
+  });
+
+
+function get_country_info(countryCode) {
+  $.ajax({
+    type: "POST",
+    url: "./php/getCountryInfo.php",
+    data: { countryCode: countryCode },
+    dataType: "json",
+    success: function (response) {
+      console.log("Response:", response);
+
+      if (response.status === "ok" && response.data) {
+        const { country, countryCode, latitude, longitude } = response.data;
+
+        $("#modalCountry").text(country);
+        $("#modalCountryCode").text(countryCode);
+        $("#modalLat").text(latitude);
+        $("#modalLon").text(longitude);
+        $("#countryModal").show();
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error("AJAX error:", error);
+    },
+  });
+}
+
+
+
+
+ /*function get_country_info(lat, lon) {
 
   $.ajax({
     type: "POST",
@@ -229,6 +266,8 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
   });
 
  }
+
+ */
 
 
 
