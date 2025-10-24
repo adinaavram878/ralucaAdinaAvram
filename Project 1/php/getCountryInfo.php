@@ -1,68 +1,57 @@
 <?php
-header('Content-Type: application/json; charset=UTF-8');
+ini_set('display_errors', 'On');
+error_reporting(E_ALL);
+
+$executionStartTime = microtime(true);
 
 
-if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
-    $lat = $_POST['latitude'];
-    $lon = $_POST['longitude'];
-
-    $apiKey = "Yb4b47890259a41f5a7c00e98f2b2f15b";
-    //$url = "https://api.opencagedata.com/geocode/v1/json?q=" . urlencode($lat) . "+" . urlencode($lon) . "&key=" . urlencode($apiKey);
-    // $url = "https://api.opencagedata.com/geocode/v1/json?q=" . urlencode($lat) . "+" . urlencode($lon) . "&key=" . urlencode($apiKey) . "&language=en&pretty=0";
-     $url = "https://api.opencagedata.com/geocode/v1/json?q=52.5432379,+13.4142133&key=6fb96883b794460eb63bffdab7abd737&language=en&pretty=1";
-
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_URL, $url);
-
-    $response = curl_exec($ch);
-
-    if ($response === false) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'cURL Error: ' . curl_error($ch)
-        ]);
-        curl_close($ch);
-        exit;
-    }
-
-    curl_close($ch);
-    $data = json_decode($response, true);
-
-    if (
-        isset($data['results'][0]['components']) &&
-        !empty($data['results'][0]['components'])
-    ) {
-        $components = $data['results'][0]['components'];
-        $country = $components['country'] ?? 'N/A';
-        $countryCode = $components['ISO_3166-1_alpha-2'] ?? 'N/A';
-        $continent = $components['continent'] ?? 'N/A';
-        $timezone = isset($data['results'][0]['annotations']['timezone']['name'])
-    ? $data['results'][0]['annotations']['timezone']['name']
-    : 'N/A';
-
-
-        echo json_encode([
-            'status' => 'ok',
-            'data' => [
-                'latitude' => $lat,
-                'longitude' => $lon,
-                'country' => $country,
-                'countryCode' => $countryCode
-            ]
-        ]);
-    } else {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Location data not found or incomplete.'
-        ]);
-    }
-
-} else {
+if (!isset($_POST['country'])) {
     echo json_encode([
-        'status' => 'error',
-        'message' => 'Required POST parameters: latitude and longitude.'
+        'status' => [
+            'code' => "400",
+            'name' => "error",
+            'description' => "Missing required parameter: country"
+        ]
     ]);
+    exit;
 }
+
+
+$lang = isset($_POST['lang']) ? $_POST['lang'] : 'en';
+$country = $_POST['country'];
+
+
+$url = 'http://api.geonames.org/countryInfoJSON?formatted=true&lang=' . urlencode($lang) .
+       '&country=' . urlencode($country) . '&username=flightltd&style=full';
+
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_URL, $url);
+
+$result = curl_exec($ch);
+curl_close($ch);
+
+if ($result === false) {
+    echo json_encode([
+        'status' => [
+            'code' => "500",
+            'name' => "error",
+            'description' => "Failed to contact GeoNames API"
+        ]
+    ]);
+    exit;
+}
+
+$decode = json_decode($result, true);
+
+$output['status']['code'] = "200";
+$output['status']['name'] = "ok";
+$output['status']['description'] = "success";
+$output['status']['returnedIn'] = intval((microtime(true) - $executionStartTime) * 1000) . " ms";
+$output['data'] = $decode['geonames'];
+
+header('Content-Type: application/json; charset=UTF-8');
+echo json_encode($output);
 ?>
