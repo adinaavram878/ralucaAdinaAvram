@@ -1,61 +1,71 @@
 <?php
-header('Content-Type: application/json');
+ini_set('display_errors', 'On');
+error_reporting(E_ALL);
+error_log("Country name received: " . $countryName);
 
 
-$geojsonPath = __DIR__ . '/data/countries.geojson';
-$geojsonData = file_get_contents($geojsonPath);
 
-if ($geojsonData === false) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to load country data']);
+$executionStartTime = microtime(true);
+
+$countryName = $_POST['countryName'] ?? '';
+
+if (!$countryName) {
+    $output['status'] = [
+        'code' => '400',
+        'name' => 'error',
+        'description' => 'No country name provided'
+    ];
+    echo json_encode($output);
     exit;
 }
 
-$geojson = json_decode($geojsonData, true);
+$username = 'adinaavram';
+$url = "http://api.geonames.org/wikipediaSearchJSON?q=" . urlencode($countryName) . "&maxRows=1&username={$username}";
 
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_URL, $url);
+$result = curl_exec($ch);
 
-$countryNames = [];
-
-foreach ($geojson['features'] as $feature) {
-    $code = strtolower($feature['properties']['iso_a2'] ?? '');
-    $name = $feature['properties']['name'] ?? '';
-
-    if ($code && $name) {
-        $countryNames[$code] = $name;
-    }
-}
-
-
-$code = strtolower($_POST['code'] ?? '');
-
-if (!isset($countryNames[$code])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid country code']);
+if ($result === false) {
+    $output['status'] = [
+        'code' => '500',
+        'name' => 'error',
+        'description' => 'Failed to fetch data: ' . curl_error($ch)
+    ];
+    echo json_encode($output);
+    curl_close($ch);
     exit;
 }
 
-$country = urlencode($countryNames[$code]);
+curl_close($ch);
+$data = json_decode($result, true);
 
-
-$url = "https://en.wikipedia.org/api/rest_v1/page/summary/$country";
-
-
-$response = @file_get_contents($url);
-
-if ($response === false) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to fetch Wikipedia data']);
+if (!isset($data['geonames'][0])) {
+    $output['status'] = [
+        'code' => '404',
+        'name' => 'error',
+        'description' => 'No Wikipedia entry found'
+    ];
+    echo json_encode($output);
     exit;
 }
 
-$data = json_decode($response, true);
+$wiki = $data['geonames'][0];
 
-if (isset($data['extract']) && isset($data['content_urls']['desktop']['page'])) {
-    echo json_encode([
-        'summary' => $data['extract'],
-        'url' => $data['content_urls']['desktop']['page']
-    ]);
-} else {
-    http_response_code(404);
-    echo json_encode(['error' => 'Wikipedia summary not found']);
-}
+$output = [
+    'status' => [
+        'code' => '200',
+        'name' => 'ok',
+        'description' => 'success',
+        'returnedIn' => intval((microtime(true) - $executionStartTime) * 1000) . ' ms'
+    ],
+    'data' => [
+        'summary' => $wiki['summary'] ?? 'No summary available.',
+        'url' => isset($wiki['wikipediaUrl']) ? 'https://' . $wiki['wikipediaUrl'] : null
+    ]
+];
+
+header('Content-Type: application/json; charset=UTF-8');
+echo json_encode($output);
