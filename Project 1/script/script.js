@@ -7,18 +7,6 @@ let selectedCountryLayer = null;
 let autoShowWeatherModal = false;
 
 
-
-/*
-const countryList = [
-  { name: "United Kingdom", code: "gb", currency: "GBP" },
-  { name: "United States", code: "us", currency: "USD" },
-  { name: "Canada", code: "ca", currency: "CAD" },
-  { name: "Germany", code: "de", currency: "EUR" },
-  { name: "Japan", code: "jp", currency: "JPY" },
-];
-*/
-
-
 function get_user_location() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -29,12 +17,8 @@ function get_user_location() {
         map.setView([userLat, userLng], 10);
         setUserLocationMarker(userLat, userLng);
 
-          get_country_info(userLat, userLng);
-     fetchWeatherAndDisplay(userLat, userLng, autoShowWeatherModal);
-
-         
-
-        
+        get_country_info(userLat, userLng);
+        fetchWeatherAndDisplay(userLat, userLng, autoShowWeatherModal);
 
         addMarkersToClusters();
         $("#loader").hide();
@@ -158,7 +142,6 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
   });
 }
 
-
 /*function get_country_info(lat, lon) {
   const apiKey = "Yb4b47890259a41f5a7c00e98f2b2f15b"; 
 
@@ -190,15 +173,13 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
 
 */
 
-  $("#countrySelect").on("change", function () {
-    const selectedCountryCode = $(this).val();
+$("#countrySelect").on("change", function () {
+  const selectedCountryCode = $(this).val();
 
-   
-    if (selectedCountryCode) {
-      get_country_info(selectedCountryCode);
-    }
-  });
-
+  if (selectedCountryCode) {
+    get_country_info(selectedCountryCode);
+  }
+});
 
 function get_country_info(countryCode) {
   $.ajax({
@@ -217,6 +198,7 @@ function get_country_info(countryCode) {
         $("#modalLat").text(latitude);
         $("#modalLon").text(longitude);
         $("#countryModal").show();
+       
       }
     },
     error: function (xhr, status, error) {
@@ -225,10 +207,7 @@ function get_country_info(countryCode) {
   });
 }
 
-
-
-
- /*function get_country_info(lat, lon) {
+/*function get_country_info(lat, lon) {
 
   $.ajax({
     type: "POST",
@@ -269,10 +248,7 @@ function get_country_info(countryCode) {
 
  */
 
-
-
-
-function getWikipedia(countryName) {
+/*function getWikipedia(countryName) {
   const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
     countryName
   )}`;
@@ -281,13 +257,9 @@ function getWikipedia(countryName) {
     if (data && data.extract) {
       console.log("Wikipedia Summary:", data.extract);
     } else {
-  
     }
-  }).fail(() => {
-    
-  });
+  }).fail(() => {});
 }
-
 
 function getNews(countryCode) {
   const apiKey = "f96a33f40fd740dd91b2e88f8c9864be";
@@ -298,12 +270,92 @@ function getNews(countryCode) {
       console.log("News Articles:", data.articles);
     } else {
     }
-  }).fail(() => {
+  }).fail(() => {});
+}
+
+*/
+
+/*function getWikipedia(countryName) {
+  $.ajax({
+    type: "POST",
+    url: "./php/getWikipedia.php",
+    data: { countryName: countryName },
+    dataType: "json",
+    success: function (response) {
+      console.log("Wikipedia Response:", response);
+
+      if (response.status === "ok" && response.data) {
+        const { extract, link } = response.data;
+
+        $("#wikiSummary").text(extract);
+        $("#wikiLink").attr("href", link);
+        $("#wikiSection").show();
+      } else {
+        $("#wikiSummary").text("No Wikipedia info available.");
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error("AJAX error (Wikipedia):", error);
+    },
+  });
+}
+  */
+
+function getWikipedia(countryName) {
+  $.ajax({
+    type: "POST",
+    url: "./php/getWikipedia.php",
+    data: {country: countryName },
+    dataType: "json",
+    success: function (response) {
+      console.log("Wikipedia Response:", response);
+
+      if (response.status === "ok" && response.data) {
+        const { summary, url } = response.data;
+
+        $("#wikiInfoText").text(summary || "No summary available.");
+        $("#wikiLink").attr("href", url).removeClass("d-none");
+
+      } else {
+        $("#wikiInfoText").text("No Wikipedia info available.");
+        $("#wikiLink").addClass("d-none");
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error("AJAX error (Wikipedia):", error);
+      $("#wikiInfoText").text("Failed to load Wikipedia info.");
+      $("#wikiLink").addClass("d-none");
+    },
   });
 }
 
 
+function getNews(countryCode) {
+  $.ajax({
+    type: "POST",
+    url: "./php/getNews.php",
+    data: { countryCode: countryCode },
+    dataType: "json",
+    success: function (response) {
+      console.log("News Response:", response);
 
+      if (response.status === "ok" && response.articles) {
+        $("#newsList").empty();
+        response.articles.slice(0, 5).forEach((article) => {
+          $("#newsList").append(
+            `<li><a href="${article.url}" target="_blank">${article.title}</a></li>`
+          );
+        });
+        $("#newsSection").show();
+      } else {
+        $("#newsList").html("<li>No news found.</li>");
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error("AJAX error (News):", error);
+    },
+  });
+}
 
 
 function addMarkersToClusters() {
@@ -384,7 +436,6 @@ function showInfoModal(title, content) {
 
 */
 
-
 function populateCountryDropdown() {
   $.getJSON("data/countries.geojson", function (data) {
     const $select = $("#countrySelect");
@@ -392,7 +443,7 @@ function populateCountryDropdown() {
     $select.append(
       '<option value="" disabled selected>-- Select a country --</option>'
     );
-
+     countryList = [];
     data.features.forEach((feature) => {
       const name = feature.properties.ADMIN;
       const code = feature.properties.ISO_A3;
@@ -402,17 +453,15 @@ function populateCountryDropdown() {
         $select.append(
           `<option value="${code.toLowerCase()}">${name}</option>`
         );
+
+       
+
       }
     });
-  }).fail(() => {
-   
-  });
+  }).fail(() => {});
+
+  
 }
-
-
-
-
-
 
 function highlightCountryBorder(code) {
   if (!countriesGeoJSON) return;
@@ -503,27 +552,24 @@ $(document).ready(function () {
     );
   }).addTo(map);
 
-$("#countrySelect").on("change", function () {
-  const selectedCode = $(this).val(); 
-  const selectedCountry = countryList.find(
-    (c) => c.code.toLowerCase() === selectedCode.toLowerCase()
-  );
+  $("#countrySelect").on("change", function () {
+    const selectedCode = $(this).val();
+    const selectedCountry = countryList.find(
+      (c) => c.code.toLowerCase() === selectedCode.toLowerCase()
+    );
 
-  if (!selectedCountry) {
-    return;
-  }
+    if (!selectedCountry) {
+      return;
+    }
 
-  const countryName = selectedCountry.name;
-  const countryCode = selectedCountry.code;
+    const countryName = selectedCountry.name;
+    const countryCode = selectedCountry.code;
 
-  get_country_info(countryCode);
-  getWeather(countryName);
-  getNews(countryCode);
-  getWikipedia(countryName);
-});
-
-
-
+    get_country_info(countryCode);
+    getWeather(countryName);
+    getNews(countryCode);
+    getWikipedia(countryName);
+  });
 
   $(document).on("click", "#Convert", function () {
     const usdAmount = parseFloat($("#usdInput").val());
