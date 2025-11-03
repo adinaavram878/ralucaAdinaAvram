@@ -185,7 +185,7 @@ function get_country_info(countryCode) {
   $.ajax({
     type: "POST",
     url: "./php/getCountryInfo.php",
-    data: { countryCode: countryCode },
+    data: { country: countryCode },
     dataType: "json",
     success: function (response) {
       console.log("Response:", response);
@@ -193,12 +193,12 @@ function get_country_info(countryCode) {
       if (response.status === "ok" && response.data) {
         const { country, countryCode, latitude, longitude } = response.data;
 
-        $("#modalCountry").text(country);
+        $("#modalCountry").text(countryName);
         $("#modalCountryCode").text(countryCode);
         $("#modalLat").text(latitude);
         $("#modalLon").text(longitude);
         $("#countryModal").show();
-       
+
       }
     },
     error: function (xhr, status, error) {
@@ -301,7 +301,7 @@ function getNews(countryCode) {
 }
   */
 
-function getWikipedia(countryName) {
+/*function getWikipedia(countryName) {
   $.ajax({
     type: "POST",
     url: "./php/getWikipedia.php",
@@ -328,13 +328,70 @@ function getWikipedia(countryName) {
     },
   });
 }
+  */
+
+function getWikipedia(countryName) {
+  if (!countryName) {
+    $("#wikiInfoText").text("No country selected.");
+    $("#wikiLink").addClass("d-none");
+    return;
+  }
 
 
-function getNews(countryCode) {
+  $("#wikiInfoText").html("<em>Loading Wikipedia summary...</em>");
+  $("#wikiLink").addClass("d-none");
+
+  $.ajax({
+    type: "POST",
+    url: "./php/getWikipedia.php",
+    data: { countryName: countryName },
+    dataType: "json",
+    success: function (response) {
+      console.log("Wikipedia Response:", response);
+
+      if (response.status && response.status.name === "ok" && response.data) {
+
+        const { summary, url } = response.data;
+
+        $("#wikiInfoText").html(`
+          <p>${summary || "No summary available."}</p>
+          <p><a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">
+            🌐 Read full article on Wikipedia
+          </a></p>
+        `);
+      } else {
+        $("#wikiInfoText").text("No Wikipedia info available.");
+      }
+    },
+    // error: function (xhr, status, error) {
+    //   console.error("AJAX error (Wikipedia):", error);
+    //   $("#wikiInfoText").text("Failed to load Wikipedia info.");
+    // },
+  });
+}
+
+
+$("#wikiModal").on("show.bs.modal", function () {
+  const selectedCode = $("#countrySelect").val();
+  const country = countryList.find(
+    (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
+  );
+
+  if (country) {
+    $("#wikiModalLabel").text(`Wikipedia: ${country.name}`);
+    getWikipedia(country.name);
+  } else {
+    $("#wikiInfoText").text("Please select a country first.");
+  }
+});
+
+
+
+function getNews(countryName) {
   $.ajax({
     type: "POST",
     url: "./php/getNews.php",
-    data: { countryCode: countryCode },
+    data: { country: countryName },
     dataType: "json",
     success: function (response) {
       console.log("News Response:", response);
@@ -443,24 +500,21 @@ function populateCountryDropdown() {
     $select.append(
       '<option value="" disabled selected>-- Select a country --</option>'
     );
-     countryList = [];
+    countryList = [];  // Reset the list
     data.features.forEach((feature) => {
       const name = feature.properties.ADMIN;
       const code = feature.properties.ISO_A3;
-      const currency = feature.properties.currency;
+      const currency = feature.properties.currency;  // Optional; may be undefined
 
       if (name && code) {
-        $select.append(
-          `<option value="${code.toLowerCase()}">${name}</option>`
-        );
-
-       
-
+        const countryCode = code.toLowerCase();  // Normalize to lowercase for consistency
+        $select.append(`<option value="${countryCode}">${name}</option>`);
+        countryList.push({ name, code: countryCode, currency });  // <-- ADD THIS LINE
       }
     });
-  }).fail(() => {});
-
-  
+  }).fail(() => {
+    showToast("Failed to load countries data.", "danger");  // Better error handling
+  });
 }
 
 function highlightCountryBorder(code) {
@@ -532,8 +586,8 @@ $(document).ready(function () {
       <select id="countryCurrencySelect" class="form-control form-control-sm">
         <option value="" selected disabled>Select a country</option>
         ${countryList
-          .map((c) => `<option value="${c.code}">${c.name}</option>`)
-          .join("")}
+        .map((c) => `<option value="${c.code}">${c.name}</option>`)
+        .join("")}
       </select>
     </div>
     <div class="form-group mt-2">
@@ -594,8 +648,7 @@ $(document).ready(function () {
         if (data && data.currency && data.rate && data.rate > 0) {
           const converted = usdAmount / data.rate;
           resultEl.html(
-            `${usdAmount.toFixed(2)} USD = ${converted.toFixed(2)} ${
-              data.currency
+            `${usdAmount.toFixed(2)} USD = ${converted.toFixed(2)} ${data.currency
             }`
           );
         } else {
@@ -658,6 +711,6 @@ $("#wikiModal").on("show.bs.modal", function () {
     $("#wikiLink").attr("href", wikiUrl).removeClass("d-none");
   } else {
     $("#wikiInfoText").text("Country data not found.");
-    $("#wikiLink").addClass("d-none");
+
   }
 });
