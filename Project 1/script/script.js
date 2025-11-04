@@ -500,20 +500,20 @@ function populateCountryDropdown() {
     $select.append(
       '<option value="" disabled selected>-- Select a country --</option>'
     );
-    countryList = [];  // Reset the list
+    countryList = [];  
     data.features.forEach((feature) => {
       const name = feature.properties.ADMIN;
       const code = feature.properties.ISO_A3;
-      const currency = feature.properties.currency;  // Optional; may be undefined
+      const currency = feature.properties.currency;  
 
       if (name && code) {
-        const countryCode = code.toLowerCase();  // Normalize to lowercase for consistency
+        const countryCode = code.toLowerCase();  
         $select.append(`<option value="${countryCode}">${name}</option>`);
-        countryList.push({ name, code: countryCode, currency });  // <-- ADD THIS LINE
+        countryList.push({ name, code: countryCode, currency });  
       }
     });
   }).fail(() => {
-    showToast("Failed to load countries data.", "danger");  // Better error handling
+    showToast("Failed to load countries data.", "danger");  
   });
 }
 
