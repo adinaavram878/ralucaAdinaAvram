@@ -1,49 +1,41 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-   
-    $lat = filter_var($_POST['lat'], FILTER_VALIDATE_FLOAT);
-    $lon = filter_var($_POST['lon'], FILTER_VALIDATE_FLOAT);
+$lat = $_POST['lat'] ?? null;
+$lon = $_POST['lon'] ?? null;
 
-    if ($lat === false || $lon === false) {
-        http_response_code(400);
-        echo json_encode(["error" => "Invalid or missing coordinates"]);
-        exit;
-    }
-
-   
-    $configPath = __DIR__ . '/data/config.json';
-    $configData = file_get_contents($configPath);
-
-    if ($configData === false) {
-        http_response_code(500);
-        echo json_encode(["error" => "Failed to load configuration"]);
-        exit;
-    }
-
-    $config = json_decode($configData, true);
-    $apiKey = $config['openWeatherMapApiKey'] ?? null;
-
-    if (!$apiKey) {
-        http_response_code(500);
-        echo json_encode(["error" => "Missing OpenWeatherMap API key in config"]);
-        exit;
-    }
-
- 
-    $url = "https://api.openweathermap.org/data/2.5/forecast?lat=$lat&lon=$lon&appid=$apiKey&units=metric";
-
-   
-    $response = @file_get_contents($url);
-
-    if ($response !== false) {
-        echo $response;
-    } else {
-        http_response_code(500);
-        echo json_encode(["error" => "Failed to fetch forecast"]);
-    }
-} else {
-    http_response_code(405);
-    echo json_encode(["error" => "Invalid request method"]);
+if (!$lat || !$lon) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Latitude and longitude are required.']);
+    exit;
 }
+
+$apiKey = '60b5e9ec6028dc5a8c9ad0e59fbedea2';
+
+
+$url = "https://api.openweathermap.org/data/2.5/forecast?lat=$lat&lon=$lon&appid=$apiKey&units=metric";
+
+
+$response = file_get_contents($url);
+
+if ($response === false) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to fetch forecast data.']);
+    exit;
+}
+
+$data = json_decode($response, true);
+
+
+if (!isset($data['list'])) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Unexpected API response.']);
+    exit;
+}
+
+
+echo json_encode($data);
