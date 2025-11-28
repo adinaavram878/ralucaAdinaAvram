@@ -1,1 +1,137 @@
 
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heathrow Airport",
+        "countryCode": "gb",
+        "ISO_A2": "GB",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.4543, 51.4700]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Gatwick Airport",
+        "countryCode": "gb",
+        "ISO_A2": "GB",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.1825, 51.1537]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Manchester Airport",
+        "countryCode": "gb",
+        "ISO_A2": "GB",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-2.2747, 53.3537]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "John F. Kennedy International Airport",
+        "countryCode": "us",
+        "ISO_A2": "US",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-73.7781, 40.6413]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Los Angeles International Airport",
+        "countryCode": "us",
+        "ISO_A2": "US",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-118.4081, 33.9425]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Charles de Gaulle Airport",
+        "countryCode": "fr",
+        "ISO_A2": "FR",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.5476, 49.0097]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Orly Airport",
+        "countryCode": "fr",
+        "ISO_A2": "FR",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.3794, 48.7233]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Frankfurt Airport",
+        "countryCode": "de",
+        "ISO_A2": "DE",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8.5706, 50.0379]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Munich Airport",
+        "countryCode": "de",
+        "ISO_A2": "DE",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11.7861, 48.3538]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Leonardo da Vinci Airport",
+        "countryCode": "it",
+        "ISO_A2": "IT",
+        "type": "airport"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [12.2383, 41.8003]
+      }
+    }
+  ]
+}
+
