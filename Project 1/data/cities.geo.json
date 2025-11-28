@@ -1,1 +1,189 @@
 
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "London",
+        "countryCode": "gb",
+        "ISO_A2": "GB",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.1276, 51.5074]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Manchester",
+        "countryCode": "gb",
+        "ISO_A2": "GB",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-2.2426, 53.4808]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Birmingham",
+        "countryCode": "gb",
+        "ISO_A2": "GB",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-1.8998, 52.4862]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "New York",
+        "countryCode": "us",
+        "ISO_A2": "US",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-74.0060, 40.7128]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Los Angeles",
+        "countryCode": "us",
+        "ISO_A2": "US",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-118.2437, 34.0522]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chicago",
+        "countryCode": "us",
+        "ISO_A2": "US",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-87.6298, 41.8781]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Paris",
+        "countryCode": "fr",
+        "ISO_A2": "FR",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.3522, 48.8566]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lyon",
+        "countryCode": "fr",
+        "ISO_A2": "FR",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4.8357, 45.7640]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Marseille",
+        "countryCode": "fr",
+        "ISO_A2": "FR",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5.3698, 43.2965]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Berlin",
+        "countryCode": "de",
+        "ISO_A2": "DE",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [13.4050, 52.5200]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Munich",
+        "countryCode": "de",
+        "ISO_A2": "DE",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11.5820, 48.1351]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Hamburg",
+        "countryCode": "de",
+        "ISO_A2": "DE",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9.9937, 53.5511]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rome",
+        "countryCode": "it",
+        "ISO_A2": "IT",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [12.4964, 41.9028]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Milan",
+        "countryCode": "it",
+        "ISO_A2": "IT",
+        "type": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9.1859, 45.4642]
+      }
+    }
+  ]
+}
+
