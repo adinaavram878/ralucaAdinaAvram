@@ -12,13 +12,26 @@ if (!$countryCode) {
 
 
 $geojsonPath = __DIR__ . '/data/countries.geojson';
-$geojsonContent = file_get_contents($geojsonPath);
 
-if ($geojsonContent === false) {
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $geojsonPath);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+
+curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_FILE);
+
+$geojsonContent = curl_exec($ch);
+
+if (curl_errno($ch)) {
     http_response_code(500);
     echo json_encode(['error' => 'Failed to load GeoJSON file']);
+    curl_close($ch);
     exit;
 }
+
+curl_close($ch);
+
 
 $data = json_decode($geojsonContent, true);
 
@@ -40,3 +53,4 @@ foreach ($data['features'] as $feature) {
 
 http_response_code(404);
 echo json_encode(['error' => 'Country not found']);
+
