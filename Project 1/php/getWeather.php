@@ -16,7 +16,7 @@ if (!$lat || !$lon) {
 
 $apiKey = '60b5e9ec6028dc5a8c9ad0e59fbedea2'; 
 
-$apiUrl = "https://api.openweathermap.org/data/2.5/forecast?lat=$lat&lon=$lon&units=metric&appid=$apiKey";
+$apiUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&appid=$apiKey";
 
 $response = file_get_contents($apiUrl);
 
@@ -28,7 +28,8 @@ if ($response === false) {
 
 $data = json_decode($response, true);
 
-if (!isset($data['list'])) {
+
+if (!isset($data['main'])) {
     http_response_code(500);
     echo json_encode(['error' => 'Unexpected API response.']);
     exit;
