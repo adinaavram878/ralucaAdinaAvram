@@ -23,18 +23,53 @@ function addMarkersToClusters(countryCode) {
   }
 
   const iso3to2 = {
-    'gbr': 'gb', 'usa': 'us', 'can': 'ca', 'aus': 'au', 'fra': 'fr',
-    'deu': 'de', 'ita': 'it', 'esp': 'es', 'nld': 'nl', 'bel': 'be',
-    'che': 'ch', 'aut': 'at', 'swe': 'se', 'nor': 'no', 'dnk': 'dk',
-    'fin': 'fi', 'pol': 'pl', 'cze': 'cz', 'prt': 'pt', 'grc': 'gr',
-    'irl': 'ie', 'jpn': 'jp', 'chn': 'cn', 'ind': 'in', 'bra': 'br',
-    'mex': 'mx', 'arg': 'ar', 'rus': 'ru', 'kor': 'kr', 'zaf': 'za',
-    'egy': 'eg', 'tur': 'tr', 'sau': 'sa', 'are': 'ae', 'isr': 'il',
-    'sgp': 'sg', 'tha': 'th', 'vnm': 'vn', 'mys': 'my', 'idn': 'id',
-    'phl': 'ph', 'pak': 'pk', 'nzl': 'nz'
+    gbr: "gb",
+    usa: "us",
+    can: "ca",
+    aus: "au",
+    fra: "fr",
+    deu: "de",
+    ita: "it",
+    esp: "es",
+    nld: "nl",
+    bel: "be",
+    che: "ch",
+    aut: "at",
+    swe: "se",
+    nor: "no",
+    dnk: "dk",
+    fin: "fi",
+    pol: "pl",
+    cze: "cz",
+    prt: "pt",
+    grc: "gr",
+    irl: "ie",
+    jpn: "jp",
+    chn: "cn",
+    ind: "in",
+    bra: "br",
+    mex: "mx",
+    arg: "ar",
+    rus: "ru",
+    kor: "kr",
+    zaf: "za",
+    egy: "eg",
+    tur: "tr",
+    sau: "sa",
+    are: "ae",
+    isr: "il",
+    sgp: "sg",
+    tha: "th",
+    vnm: "vn",
+    mys: "my",
+    idn: "id",
+    phl: "ph",
+    pak: "pk",
+    nzl: "nz",
   };
 
-  const code = iso3to2[countryCode.toLowerCase()] || countryCode.substring(0, 2);
+  const code =
+    iso3to2[countryCode.toLowerCase()] || countryCode.substring(0, 2);
   let completed = 0;
 
   $.ajax({
@@ -42,31 +77,34 @@ function addMarkersToClusters(countryCode) {
     method: "POST",
     data: { countryCode: code.toUpperCase() },
     dataType: "json",
-    success: function(data) {
+    success: function (data) {
       if (data && data.features) {
         const icon = L.divIcon({
           html: '<i class="fa fa-plane" style="color: #0066cc; font-size: 24px;"></i>',
-          className: 'custom-marker-icon',
+          className: "custom-marker-icon",
           iconSize: [30, 30],
           iconAnchor: [15, 15],
-          popupAnchor: [0, -15]
+          popupAnchor: [0, -15],
         });
 
-        data.features.forEach(airport => {
-          const marker = L.marker([
-            airport.geometry.coordinates[1],
-            airport.geometry.coordinates[0]
-          ], { icon: icon }).bindPopup(`<b>${airport.properties.name}</b><br>Type: Airport`);
+        data.features.forEach((airport) => {
+          const marker = L.marker(
+            [airport.geometry.coordinates[1], airport.geometry.coordinates[0]],
+            { icon: icon }
+          ).bindPopup(`<b>${airport.properties.name}</b><br>Type: Airport`);
           airportCluster.addLayer(marker);
         });
 
-        if (airportCluster.getLayers().length > 0 && !map.hasLayer(airportCluster)) {
+        if (
+          airportCluster.getLayers().length > 0 &&
+          !map.hasLayer(airportCluster)
+        ) {
           map.addLayer(airportCluster);
         }
       }
       checkComplete();
     },
-    error: () => checkComplete()
+    error: () => checkComplete(),
   });
 
   $.ajax({
@@ -74,21 +112,21 @@ function addMarkersToClusters(countryCode) {
     method: "POST",
     data: { countryCode: code.toUpperCase() },
     dataType: "json",
-    success: function(data) {
+    success: function (data) {
       if (data && data.features) {
         const icon = L.divIcon({
           html: '<i class="fa fa-city" style="color: #cc6600; font-size: 24px;"></i>',
-          className: 'custom-marker-icon',
+          className: "custom-marker-icon",
           iconSize: [30, 30],
           iconAnchor: [15, 15],
-          popupAnchor: [0, -15]
+          popupAnchor: [0, -15],
         });
 
-        data.features.forEach(city => {
-          const marker = L.marker([
-            city.geometry.coordinates[1],
-            city.geometry.coordinates[0]
-          ], { icon: icon }).bindPopup(`<b>${city.properties.name}</b><br>Type: City`);
+        data.features.forEach((city) => {
+          const marker = L.marker(
+            [city.geometry.coordinates[1], city.geometry.coordinates[0]],
+            { icon: icon }
+          ).bindPopup(`<b>${city.properties.name}</b><br>Type: City`);
           cityCluster.addLayer(marker);
         });
 
@@ -98,7 +136,7 @@ function addMarkersToClusters(countryCode) {
       }
       checkComplete();
     },
-    error: () => checkComplete()
+    error: () => checkComplete(),
   });
 
   function checkComplete() {
@@ -108,9 +146,10 @@ function addMarkersToClusters(countryCode) {
 
       if (airports > 0 || cities > 0) {
         const msg = [];
-        if (airports > 0) msg.push(`${airports} airport${airports > 1 ? 's' : ''}`);
-        if (cities > 0) msg.push(`${cities} ${cities > 1 ? 'cities' : 'city'}`);
-        showToast(`✈️ Displaying: ${msg.join(' and ')}`, "success");
+        if (airports > 0)
+          msg.push(`${airports} airport${airports > 1 ? "s" : ""}`);
+        if (cities > 0) msg.push(`${cities} ${cities > 1 ? "cities" : "city"}`);
+        showToast(`✈️ Displaying: ${msg.join(" and ")}`, "success");
       } else {
         showToast("No markers available for this country", "info");
       }
@@ -134,7 +173,6 @@ function get_user_location() {
         map.setView([userLat, userLng], 6);
         setUserLocationMarker(userLat, userLng);
 
-        
         const countryFeature = countriesGeoJSON.features.find((f) =>
           turf.booleanPointInPolygon([userLng, userLat], f)
         );
@@ -143,9 +181,11 @@ function get_user_location() {
           const countryCode = (
             countryFeature.properties.ISO_A3 || ""
           ).toLowerCase();
-          const countryName = countryFeature.properties.ADMIN ||
-                              countryFeature.properties.NAME ||
-                              countryFeature.properties.name || "";
+          const countryName =
+            countryFeature.properties.ADMIN ||
+            countryFeature.properties.NAME ||
+            countryFeature.properties.name ||
+            "";
           highlightCountryAndMarkers(countryCode, countryName);
         }
 
@@ -206,33 +246,33 @@ const satellite = L.tileLayer(
 );
 
 const airportCluster = L.markerClusterGroup({
-  iconCreateFunction: function(cluster) {
+  iconCreateFunction: function (cluster) {
     return L.divIcon({
-      html: '<div><span>' + cluster.getChildCount() + '</span></div>',
-      className: 'marker-cluster marker-cluster-airport',
-      iconSize: L.point(24, 24)
+      html: "<div><span>" + cluster.getChildCount() + "</span></div>",
+      className: "marker-cluster marker-cluster-airport",
+      iconSize: L.point(24, 24),
     });
   },
   spiderfyOnMaxZoom: true,
   showCoverageOnHover: false,
   zoomToBoundsOnClick: true,
   maxClusterRadius: 30,
-  disableClusteringAtZoom: 8
+  disableClusteringAtZoom: 8,
 });
 
 const cityCluster = L.markerClusterGroup({
-  iconCreateFunction: function(cluster) {
+  iconCreateFunction: function (cluster) {
     return L.divIcon({
-      html: '<div><span>' + cluster.getChildCount() + '</span></div>',
-      className: 'marker-cluster marker-cluster-city',
-      iconSize: L.point(24, 24)
+      html: "<div><span>" + cluster.getChildCount() + "</span></div>",
+      className: "marker-cluster marker-cluster-city",
+      iconSize: L.point(24, 24),
     });
   },
   spiderfyOnMaxZoom: true,
   showCoverageOnHover: false,
   zoomToBoundsOnClick: true,
   maxClusterRadius: 30,
-  disableClusteringAtZoom: 8
+  disableClusteringAtZoom: 8,
 });
 
 function setUserLocationMarker(lat, lng) {
@@ -247,7 +287,6 @@ function setUserLocationMarker(lat, lng) {
 }
 
 function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
-
   $.ajax({
     url: "./php/getWeather.php",
     method: "POST",
@@ -277,7 +316,9 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
             <td class="text-end text-capitalize">${weather.weather[0].description}</td>
           </tr>
         `;
-        $("#exampleModal .modal-body").html(`<table class="table">${tableRows}</table>`);
+        $("#exampleModal .modal-body").html(
+          `<table class="table">${tableRows}</table>`
+        );
         $("#exampleModal").modal("show");
       }
     },
@@ -308,7 +349,6 @@ function weatherEmoji(condition) {
   return map[condition] || "🌍";
 }
 
-
 function getForecast(lat, lon) {
   $.ajax({
     url: "./php/getForecast.php",
@@ -321,7 +361,6 @@ function getForecast(lat, lon) {
         return;
       }
 
-     
       let days = {};
       res.list.forEach((entry) => {
         const date = entry.dt_txt.split(" ")[0];
@@ -329,7 +368,6 @@ function getForecast(lat, lon) {
         days[date].push(entry);
       });
 
-      
       const fiveDays = Object.keys(days).slice(0, 5);
 
       let html = `<div class='forecast-container'>`;
@@ -342,25 +380,33 @@ function getForecast(lat, lon) {
 
         const emoji = weatherEmoji(entry.weather[0].main);
 
-       
+        
         const dateObj = new Date(date);
-        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
-        const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const dayName = dateObj.toLocaleDateString("en-US", {
+          weekday: "short",
+        });
+        const monthDay = dateObj.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
 
         html += `
           <div class="forecast-day">
             <h6>${dayName}</h6>
             <div style="font-size: 42px; margin: 10px 0;">${emoji}</div>
             <div><strong>${Math.round(entry.main.temp)}°C</strong></div>
-            <div class="text-capitalize small" style="margin-top: 8px; font-weight: 500;">${entry.weather[0].description}</div>
-            <div class="small" style="opacity: 0.8; margin-top: 4px;">💨 ${entry.wind.speed} m/s</div>
+            <div class="text-capitalize small" style="margin-top: 8px; font-weight: 500;">${
+              entry.weather[0].description
+            }</div>
+            <div class="small" style="opacity: 0.8; margin-top: 4px;">💨 ${
+              entry.wind.speed
+            } m/s</div>
             <div class="small" style="opacity: 0.7; margin-top: 8px; font-size: 11px;">${monthDay}</div>
           </div>
         `;
       });
 
       html += `</div>`;
-
 
       showInfoModal("5-Day Weather Forecast", html, true);
     },
@@ -401,7 +447,6 @@ function getWikipedia(countryName) {
         $("#wikiInfoText").text("No Wikipedia info available.");
       }
     },
-    
   });
 }
 
@@ -432,7 +477,7 @@ function getPopulation(countryCodeOrName) {
       if (response.status.name === "ok" && response.data) {
         const data = response.data;
 
-        let flagImg = '';
+        let flagImg = "";
         if (data.flag) {
           flagImg = `<img src="${data.flag}" alt="${data.countryName} flag" style="width: 60px; height: auto; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
         }
@@ -440,7 +485,9 @@ function getPopulation(countryCodeOrName) {
         $("#populationInfo").html(`
           <div style="text-align: center;">
             ${flagImg}
-            <h5 style="margin-bottom: 20px; color: #333;">${data.countryName}</h5>
+            <h5 style="margin-bottom: 20px; color: #333;">${
+              data.countryName
+            }</h5>
           </div>
           <table class="table table-sm">
             <tbody>
@@ -495,7 +542,6 @@ function getPopulation(countryCodeOrName) {
 }
 
 function getWeather(countryName) {
-  
   const country = countryList.find(
     (c) => c.name.toLowerCase() === countryName.toLowerCase()
   );
@@ -505,7 +551,6 @@ function getWeather(countryName) {
     return;
   }
 
-  
   if (countriesGeoJSON) {
     const feature = countriesGeoJSON.features.find((f) => {
       const isoCode = f.properties.ISO_A3 || f.properties.iso_a3;
@@ -513,7 +558,6 @@ function getWeather(countryName) {
     });
 
     if (feature && feature.geometry) {
-      
       const bounds = L.geoJSON(feature).getBounds();
       const center = bounds.getCenter();
 
@@ -541,9 +585,6 @@ function showInfoModal(title, content, isWide = false) {
 
   $("#exampleModal").modal("show");
 }
-
-
-
 
 function populateCountryDropdown() {
   $.getJSON("data/countries.geojson", function (data) {
@@ -592,7 +633,7 @@ function highlightCountryBorder(code, countryNameFromDropdown) {
 
   map.fitBounds(selectedCountryLayer.getBounds(), { padding: [50, 50] });
 
-
+ 
   const bounds = selectedCountryLayer.getBounds();
   const center = bounds.getCenter();
 
@@ -602,38 +643,39 @@ function highlightCountryBorder(code, countryNameFromDropdown) {
   }
 
   
-  const countryName = countryNameFromDropdown ||
-                      feature.properties.ADMIN ||
-                      feature.properties.NAME ||
-                      feature.properties.name ||
-                      feature.properties.admin ||
-                      feature.properties.NAME_LONG ||
-                      "Country";
+  const countryName =
+    countryNameFromDropdown ||
+    feature.properties.ADMIN ||
+    feature.properties.NAME ||
+    feature.properties.name ||
+    feature.properties.admin ||
+    feature.properties.NAME_LONG ||
+    "Country";
 
   window.countryLabelMarker = L.marker(center, {
     icon: L.divIcon({
-      className: 'country-label-marker',
+      className: "country-label-marker",
       html: `<div class="country-label country-label-visible">${countryName}</div>`,
       iconSize: null, 
-      iconAnchor: null 
+      iconAnchor: null, 
     }),
-    interactive: false 
+    interactive: false, 
   }).addTo(map);
 
   console.log("Country selected:", countryName, "Code:", code);
 
-  
+ 
   if (window.countryLabelTimeout) {
     clearTimeout(window.countryLabelTimeout);
   }
 
-  
+ 
   window.countryLabelTimeout = setTimeout(() => {
     if (window.countryLabelMarker) {
-     
-      const labelElement = document.querySelector('.country-label-visible');
+
+      const labelElement = document.querySelector(".country-label-visible");
       if (labelElement) {
-        labelElement.classList.add('country-label-fadeout');
+        labelElement.classList.add("country-label-fadeout");
 
        
         setTimeout(() => {
@@ -647,56 +689,52 @@ function highlightCountryBorder(code, countryNameFromDropdown) {
   }, 5000);
 }
 
-
 $(document).ready(function () {
-
-
   map = L.map("map", { layers: [streets] }).setView([54.5, -4], 6);
   loadGeoJSONData();
   populateCountryDropdown();
   get_user_location();
 
-
-
-
-
   L.easyButton({
-    states: [{
-      icon: "fa-cloud-sun",
-      title: "Country Weather",
-      onClick: () => {
-    const selectedCode = $("#countrySelect").val();
-    const selectedCountry = countryList.find(
-      (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
-    );
+    states: [
+      {
+        icon: "fa-cloud-sun",
+        title: "Country Weather",
+        onClick: () => {
+          const selectedCode = $("#countrySelect").val();
+          const selectedCountry = countryList.find(
+            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
+          );
 
-    if (selectedCountry) {
-      
-      if (countriesGeoJSON) {
-        const feature = countriesGeoJSON.features.find((f) => {
-          const isoCode = f.properties.ISO_A3 || f.properties.iso_a3;
-          return isoCode && isoCode.toLowerCase() === selectedCountry.code.toLowerCase();
-        });
+          if (selectedCountry) {
+            if (countriesGeoJSON) {
+              const feature = countriesGeoJSON.features.find((f) => {
+                const isoCode = f.properties.ISO_A3 || f.properties.iso_a3;
+                return (
+                  isoCode &&
+                  isoCode.toLowerCase() === selectedCountry.code.toLowerCase()
+                );
+              });
 
-        if (feature && feature.geometry) {
-         
-          const bounds = L.geoJSON(feature).getBounds();
-          const center = bounds.getCenter();
+              if (feature && feature.geometry) {
+                const bounds = L.geoJSON(feature).getBounds();
+                const center = bounds.getCenter();
 
-          fetchWeatherAndDisplay(center.lat, center.lng, true);
-        } else {
-          showToast("Could not find country coordinates.", "warning");
-        }
-      } else {
-        showToast("Country data not loaded yet.", "warning");
-      }
-    } else {
-      showToast("Select a country first to view weather.", "info");
-    }
-      }
-    }]
+                fetchWeatherAndDisplay(center.lat, center.lng, true);
+              } else {
+                showToast("Could not find country coordinates.", "warning");
+              }
+            } else {
+              showToast("Country data not loaded yet.", "warning");
+            }
+          } else {
+            showToast("Select a country first to view weather.", "info");
+          }
+        },
+      },
+    ],
   }).addTo(map);
-
+ 
   L.easyButton({
     states: [
       {
@@ -720,7 +758,10 @@ $(document).ready(function () {
           console.log("Found country:", selectedCountry);
 
           if (!selectedCountry) {
-            showToast("Country not found. Selected: " + selectedCode, "warning");
+            showToast(
+              "Country not found. Selected: " + selectedCode,
+              "warning"
+            );
             return;
           }
 
@@ -730,10 +771,15 @@ $(document).ready(function () {
           }
 
           console.log("Looking for country code:", selectedCountry.code);
-          console.log("GeoJSON features count:", countriesGeoJSON.features.length);
+          console.log(
+            "GeoJSON features count:",
+            countriesGeoJSON.features.length
+          );
 
           const feature = countriesGeoJSON.features.find((f) => {
-            const iso = (f.properties.ISO_A3 || f.properties.iso_a3)?.toLowerCase();
+            const iso = (
+              f.properties.ISO_A3 || f.properties.iso_a3
+            )?.toLowerCase();
             return iso === selectedCountry.code;
           });
 
@@ -741,8 +787,10 @@ $(document).ready(function () {
           if (feature) {
             console.log("Feature properties:", feature.properties);
           } else {
-          
-            const sampleCodes = countriesGeoJSON.features.slice(0, 5).map(f => f.properties.ISO_A3);
+            
+            const sampleCodes = countriesGeoJSON.features
+              .slice(0, 5)
+              .map((f) => f.properties.ISO_A3);
             console.log("Sample ISO codes in GeoJSON:", sampleCodes);
           }
 
@@ -752,7 +800,10 @@ $(document).ready(function () {
             console.log("Fetching forecast for:", selectedCountry.name, center);
             getForecast(center.lat, center.lng);
           } else {
-            showToast("Could not find country location for: " + selectedCountry.code, "warning");
+            showToast(
+              "Could not find country location for: " + selectedCountry.code,
+              "warning"
+            );
           }
         },
       },
@@ -760,74 +811,81 @@ $(document).ready(function () {
   }).addTo(map);
   console.log("5-Day Forecast button added to map");
 
-
   L.easyButton({
-    states: [{
-      icon: "fa-users",
-      title: "Population Data",
-      onClick: () => {
-        const selectedCode = $("#countrySelect").val();
-        const selectedCountry = countryList.find(
-          (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
-        );
-
-        if (selectedCountry) {
-          getPopulation(selectedCountry.code);
-          $("#populationModal").modal("show");
-        } else {
-          showToast("Select a country first to view population.", "info");
-        }
-      }
-    }]
-  }).addTo(map);
-
-  L.easyButton({
-    states: [{
-      icon: "fa-map-marker-alt",
-      title: "Toggle Markers (Airports & Cities)",
-      onClick: function () {
-        const hasAirports = map.hasLayer(airportCluster);
-        const hasCities = map.hasLayer(cityCluster);
-
-        if (hasAirports || hasCities) {
-         
-          if (hasAirports) map.removeLayer(airportCluster);
-          if (hasCities) map.removeLayer(cityCluster);
-          showToast("Markers hidden", "info");
-        } else {
-          
+    states: [
+      {
+        icon: "fa-users",
+        title: "Population Data",
+        onClick: () => {
           const selectedCode = $("#countrySelect").val();
-          if (selectedCode) {
-            addMarkersToClusters(selectedCode);
-            showToast("Markers displayed", "success");
+          const selectedCountry = countryList.find(
+            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
+          );
+
+          if (selectedCountry) {
+            getPopulation(selectedCountry.code);
+            $("#populationModal").modal("show");
           } else {
-            showToast("Select a country first to show markers.", "info");
+            showToast("Select a country first to view population.", "info");
           }
-        }
-      }
-    }]
+        },
+      },
+    ],
   }).addTo(map);
 
+  L.easyButton({
+    states: [
+      {
+        icon: "fa-map-marker-alt",
+        title: "Toggle Markers (Airports & Cities)",
+        onClick: function () {
+          const hasAirports = map.hasLayer(airportCluster);
+          const hasCities = map.hasLayer(cityCluster);
 
-
+          if (hasAirports || hasCities) {
+            if (hasAirports) map.removeLayer(airportCluster);
+            if (hasCities) map.removeLayer(cityCluster);
+            showToast("Markers hidden", "info");
+          } else {
+            const selectedCode = $("#countrySelect").val();
+            if (selectedCode) {
+              addMarkersToClusters(selectedCode);
+              showToast("Markers displayed", "success");
+            } else {
+              showToast("Select a country first to show markers.", "info");
+            }
+          }
+        },
+      },
+    ],
+  }).addTo(map);
 
   L.easyButton({
-    states: [{
-      icon: "fa-money-bill-wave",
-      title: "Currency Converter",
-      onClick: () => {
-    
-    const selectedMainCountry = $("#countrySelect").val();
+    states: [
+      {
+        icon: "fa-money-bill-wave",
+        title: "Currency Converter",
+        onClick: () => {
+          
+          const selectedMainCountry = $("#countrySelect").val();
 
-    showInfoModal(
-      "Currency Converter",
-      `
+          showInfoModal(
+            "Currency Converter",
+            `
     <div class="form-group mt-2">
       <label for="countryCurrencySelect"><strong>Select Country:</strong></label>
       <select id="countryCurrencySelect" class="form-control form-control-sm">
         <option value="" disabled>Select a country</option>
         ${countryList
-          .map((c) => `<option value="${c.code}" ${selectedMainCountry && c.code.toLowerCase() === selectedMainCountry.toLowerCase() ? 'selected' : ''}>${c.name}</option>`)
+          .map(
+            (c) =>
+              `<option value="${c.code}" ${
+                selectedMainCountry &&
+                c.code.toLowerCase() === selectedMainCountry.toLowerCase()
+                  ? "selected"
+                  : ""
+              }>${c.name}</option>`
+          )
           .join("")}
       </select>
     </div>
@@ -848,39 +906,37 @@ $(document).ready(function () {
       <strong>Converted Amount:</strong> <span id="convertedAmount">—</span>
     </div>
     `
-    );
+          );
 
-    
-    if (selectedMainCountry) {
-      setTimeout(() => {
-        $("#countryCurrencySelect").trigger("change");
-      }, 100);
-    }
-      }
-    }]
+          
+          if (selectedMainCountry) {
+            setTimeout(() => {
+              $("#countryCurrencySelect").trigger("change");
+            }, 100);
+          }
+        },
+      },
+    ],
   }).addTo(map);
 
-$("#countrySelect").on("change", function () {
-  const selectedCode = $(this).val();
-  if (!selectedCode) return;
+  $("#countrySelect").on("change", function () {
+    const selectedCode = $(this).val();
+    if (!selectedCode) return;
 
+    const selectedCountry = countryList.find(
+      (c) => c.code.toLowerCase() === selectedCode.toLowerCase()
+    );
 
-  const selectedCountry = countryList.find(
-    (c) => c.code.toLowerCase() === selectedCode.toLowerCase()
-  );
+    if (!selectedCountry) return;
 
-  if (!selectedCountry) return;
+    const countryName = selectedCountry.name;
+    const countryCode = selectedCountry.code;
 
-  const countryName = selectedCountry.name;
-  const countryCode = selectedCountry.code;
-
-  highlightCountryBorder(countryCode, countryName); 
-  addMarkersToClusters(countryCode);
-  getWeather(countryName);
-  getPopulation(countryCode);
-  
-});
-
+    highlightCountryBorder(countryCode, countryName); 
+    addMarkersToClusters(countryCode);
+    getWeather(countryName);
+    getPopulation(countryCode);
+  });
 
   
   $(document).on("change", "#countryCurrencySelect", function () {
@@ -889,13 +945,17 @@ $("#countrySelect").on("change", function () {
     const convertBtn = $("#Convert");
 
     if (!selectedCountryCode) {
-      currencySelectEl.html('<option value="">Select a country first</option>').prop("disabled", true);
+      currencySelectEl
+        .html('<option value="">Select a country first</option>')
+        .prop("disabled", true);
       convertBtn.prop("disabled", true);
       return;
     }
 
-    
-    currencySelectEl.html('<option value="">Loading...</option>').prop("disabled", true);
+   
+    currencySelectEl
+      .html('<option value="">Loading...</option>')
+      .prop("disabled", true);
     convertBtn.prop("disabled", true);
 
     $.post(
@@ -903,14 +963,21 @@ $("#countrySelect").on("change", function () {
       { countryCode: selectedCountryCode },
       function (data) {
         if (data && data.currency && !data.error) {
-          currencySelectEl.html(`<option value="${data.currency}" selected>${data.currency}</option>`);
+          currencySelectEl.html(
+            `<option value="${data.currency}" selected>${data.currency}</option>`
+          );
           currencySelectEl.prop("disabled", false);
           convertBtn.prop("disabled", false);
         } else {
-          currencySelectEl.html('<option value="">Currency not available</option>');
+          currencySelectEl.html(
+            '<option value="">Currency not available</option>'
+          );
           currencySelectEl.prop("disabled", true);
           convertBtn.prop("disabled", true);
-          showToast(data.error || "Currency not available for this country", "warning");
+          showToast(
+            data.error || "Currency not available for this country",
+            "warning"
+          );
         }
       },
       "json"
@@ -946,7 +1013,9 @@ $("#countrySelect").on("change", function () {
         if (data && data.currency && data.rate && data.rate > 0) {
           const converted = usdAmount * data.rate;
           resultEl.html(
-            `${usdAmount.toFixed(2)} ${data.currency} = ${converted.toFixed(2)} EUR`
+            `${usdAmount.toFixed(2)} ${data.currency} = ${converted.toFixed(
+              2
+            )} EUR`
           );
         } else {
           resultEl.text(data.error || "Currency data not available.");
@@ -959,44 +1028,67 @@ $("#countrySelect").on("change", function () {
   });
 
   L.easyButton({
-    states: [{
-      icon: "fa-book-open",
-      title: "Wikipedia Information",
-      onClick: () => {
-        const selected = $("#countrySelect").val();
-        if (selected) {
-          $("#wikiModal").modal("show");
-        } else {
-          showToast("Select a country first.", "info");
-        }
-      }
-    }]
+    states: [
+      {
+        icon: "fa-book-open",
+        title: "Wikipedia Information",
+        onClick: () => {
+          const selected = $("#countrySelect").val();
+          if (selected) {
+            $("#wikiModal").modal("show");
+          } else {
+            showToast("Select a country first.", "info");
+          }
+        },
+      },
+    ],
   }).addTo(map);
 
   L.easyButton({
-    states: [{
-      icon: '<i class="fa-solid fa-location-crosshairs"></i>',
-      title: "My Location",
-      onClick: () => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              userLat = pos.coords.latitude;
-              userLng = pos.coords.longitude;
-              map.setView([userLat, userLng], 12);
-              setUserLocationMarker(userLat, userLng);
-              showToast("Location updated", "success");
-            },
-            () => showToast("Unable to retrieve your location.", "warning")
-          );
-        } else {
-          showToast("Geolocation is not supported by your browser.", "danger");
-        }
-      }
-    }]
+    states: [
+      {
+        icon: '<i class="fa-solid fa-location-crosshairs"></i>',
+        title: "My Location",
+        onClick: () => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                map.setView([userLat, userLng], 12);
+                setUserLocationMarker(userLat, userLng);
+                showToast("Location updated", "success");
+              },
+              () => showToast("Unable to retrieve your location.", "warning")
+            );
+          } else {
+            showToast(
+              "Geolocation is not supported by your browser.",
+              "danger"
+            );
+          }
+        },
+      },
+    ],
   }).addTo(map);
 
- 
-
+  
 });
+$("#wikiModal").on("show.bs.modal", function () {
+  const selected = $("#countrySelect").val();
+  const country = countryList.find(
+    (c) => c.code.toLowerCase() === selected.toLowerCase()
+  );
 
+  if (country) {
+    const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(
+      country.name
+    )}`;
+    $("#wikiInfoText").html(
+      `Read more about <strong>${country.name}</strong> on Wikipedia:`
+    );
+    $("#wikiLink").attr("href", wikiUrl).removeClass("d-none");
+  } else {
+    $("#wikiInfoText").text("Country data not found.");
+  }
+});
