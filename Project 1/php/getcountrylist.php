@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 
-$geojsonPath = __DIR__ . '/data/countries.geojson';
+$geojsonPath = __DIR__ . '/../data/countryBorders.geo.json';
 
 
 if (!file_exists($geojsonPath)) {
@@ -34,10 +34,17 @@ if (!is_array($data) || !isset($data['features'])) {
 
 $countries = [];
 foreach ($data['features'] as $feature) {
-    $code = strtolower($feature['properties']['ISO_A2'] ?? '');
-    $name = $feature['properties']['ADMIN'] ?? '';
+    $props = $feature['properties'] ?? [];
 
-    if ($code && $name) {
+   
+    $code = $props['iso_a2'] ?? $props['iso_a3'] ?? $props['ISO_A2'] ?? $props['ISO_A3'] ?? '';
+    $code = strtolower($code);
+
+    
+    $name = $props['name'] ?? $props['ADMIN'] ?? $props['NAME'] ?? '';
+
+
+    if ($code && $name && $code !== '-99') {
         $countries[] = [
             'code' => $code,
             'name' => $name
@@ -46,7 +53,10 @@ foreach ($data['features'] as $feature) {
 }
 
 
-usort($countries, fn($a, $b) => strcmp($a['name'], $b['name']));
+usort($countries, function ($a, $b) {
+    return strcmp($a['name'], $b['name']);
+});
+
 
 
 echo json_encode($countries);
