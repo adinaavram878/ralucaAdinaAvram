@@ -1,13 +1,11 @@
 <?php
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
-error_log("Country name received: " . $countryName);
-
-
 
 $executionStartTime = microtime(true);
 
 $countryName = $_POST['countryName'] ?? '';
+error_log("Country name received: " . $countryName);
 
 if (!$countryName) {
     $output['status'] = [
@@ -62,6 +60,7 @@ $output = [
         'returnedIn' => intval((microtime(true) - $executionStartTime) * 1000) . ' ms'
     ],
     'data' => [
+        'title' => $wiki['title'] ?? 'No title available',
         'summary' => $wiki['summary'] ?? 'No summary available.',
         'url' => isset($wiki['wikipediaUrl']) ? 'https://' . $wiki['wikipediaUrl'] : null
     ]
