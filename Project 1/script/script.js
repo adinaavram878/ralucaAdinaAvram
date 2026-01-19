@@ -1,15 +1,31 @@
 let map;
 let userLat, userLng;
-let userLocationMarker = null;
+
 let countryList = [];
 let countriesGeoJSON = null;
 let selectedCountryLayer = null;
 let autoShowWeatherModal = false;
 
+function hideLoader() {
+  const loader = document.getElementById("loader");
+  if (loader) {
+    loader.style.opacity = "0";
+    setTimeout(() => (loader.style.display = "none"), 300);
+  }
+}
+
 function loadGeoJSONData() {
+  console.log("📥 Loading countryBorders.geo.json...");
   $.getJSON("data/countryBorders.geo.json", (data) => {
     countriesGeoJSON = data;
-  }).fail(() => showToast("Failed to load country borders.", "danger"));
+    console.log(`✅ GeoJSON loaded: ${data.features.length} countries`);
+    hideLoader();
+
+    get_user_location();
+  }).fail(() => {
+    console.error("❌ Failed to load country borders");
+    showToast("Failed to load country borders.", "danger");
+  });
 }
 
 function addMarkersToClusters(countryCode) {
@@ -73,7 +89,7 @@ function addMarkersToClusters(countryCode) {
   let completed = 0;
 
   $.ajax({
-    url: "./php/getAirports.php",
+    url: "./php/getairports.php",
     method: "POST",
     data: { countryCode: code.toUpperCase() },
     dataType: "json",
@@ -90,7 +106,7 @@ function addMarkersToClusters(countryCode) {
         data.features.forEach((airport) => {
           const marker = L.marker(
             [airport.geometry.coordinates[1], airport.geometry.coordinates[0]],
-            { icon: icon }
+            { icon: icon },
           ).bindPopup(`<b>${airport.properties.name}</b><br>Type: Airport`);
           airportCluster.addLayer(marker);
         });
@@ -108,7 +124,7 @@ function addMarkersToClusters(countryCode) {
   });
 
   $.ajax({
-    url: "./php/getCities.php",
+    url: "./php/getcities.php",
     method: "POST",
     data: { countryCode: code.toUpperCase() },
     dataType: "json",
@@ -125,7 +141,7 @@ function addMarkersToClusters(countryCode) {
         data.features.forEach((city) => {
           const marker = L.marker(
             [city.geometry.coordinates[1], city.geometry.coordinates[0]],
-            { icon: icon }
+            { icon: icon },
           ).bindPopup(`<b>${city.properties.name}</b><br>Type: City`);
           cityCluster.addLayer(marker);
         });
@@ -147,8 +163,12 @@ function addMarkersToClusters(countryCode) {
       if (airports > 0 || cities > 0) {
         const msg = [];
         if (airports > 0)
-          msg.push(`${airports} airport${airports > 1 ? "s" : ""}`);
-        if (cities > 0) msg.push(`${cities} ${cities > 1 ? "cities" : "city"}`);
+          msg.push(
+            `${numeral(airports).format("0")} airport${airports > 1 ? "s" : ""}`,
+          );
+        if (cities > 0) msg.push(
+          `${numeral(cities).format("0")} ${cities > 1 ? "cities" : "city"}`,
+        );
         showToast(`✈️ Displaying: ${msg.join(" and ")}`, "success");
       } else {
         showToast("No markers available for this country", "info");
@@ -163,39 +183,79 @@ function highlightCountryAndMarkers(code, countryName) {
 }
 
 function get_user_location() {
-  $("#loader").show();
+  console.log("🌍 get_user_location called");
   if (navigator.geolocation) {
+    console.log("✅ Geolocation is supported");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         userLat = pos.coords.latitude;
         userLng = pos.coords.longitude;
+        console.log(`📍 Got coordinates: ${userLat}, ${userLng}`);
 
         map.setView([userLat, userLng], 6);
-        setUserLocationMarker(userLat, userLng);
 
-        const countryFeature = countriesGeoJSON.features.find((f) =>
-          turf.booleanPointInPolygon([userLng, userLat], f)
-        );
-
-        if (countryFeature) {
-          const countryCode = (
-            countryFeature.properties.ISO_A3 || ""
-          ).toLowerCase();
-          const countryName =
-            countryFeature.properties.ADMIN ||
-            countryFeature.properties.NAME ||
-            countryFeature.properties.name ||
-            "";
-          highlightCountryAndMarkers(countryCode, countryName);
-        }
+        console.log("🔍 Calling useTurfDetection...");
+        useTurfDetection(userLat, userLng);
 
         fetchWeatherAndDisplay(userLat, userLng, autoShowWeatherModal);
-        setTimeout(() => $("#loader").hide(), 1000);
       },
-      () => fallbackLocation()
+      (error) => {
+        console.error("❌ Geolocation error:", error.message);
+        fallbackLocation();
+      },
     );
   } else {
+    console.log("❌ Geolocation not supported");
     fallbackLocation();
+  }
+}
+
+function useTurfDetection(lat, lng) {
+  console.log(`🔍 useTurfDetection called with: ${lat}, ${lng}`);
+
+  if (!countriesGeoJSON) {
+    console.error("❌ countriesGeoJSON not loaded yet");
+    return;
+  }
+
+  console.log(
+    `📦 countriesGeoJSON has ${countriesGeoJSON.features.length} countries`,
+  );
+
+  const countryFeature = countriesGeoJSON.features.find((f) =>
+    turf.booleanPointInPolygon([lng, lat], f),
+  );
+
+  if (countryFeature) {
+    console.log("✅ Found country feature:", countryFeature.properties);
+
+    const countryCode = (
+      countryFeature.properties.iso_a2 ||
+      countryFeature.properties.ISO_A2 ||
+      countryFeature.properties.iso_a3 ||
+      countryFeature.properties.ISO_A3 ||
+      ""
+    ).toLowerCase();
+
+    console.log(`🔑 Country code detected: ${countryCode}`);
+
+    if (countryCode) {
+      console.log(`📝 Setting dropdown value to: ${countryCode}`);
+      $("#countrySelect").val(countryCode).change();
+
+      const selectedValue = $("#countrySelect").val();
+      console.log(`✔️ Dropdown now shows: ${selectedValue}`);
+
+      const selectElement = document.getElementById("countrySelect");
+      const selectedOption = selectElement.options[selectElement.selectedIndex];
+      if (selectedOption) {
+        selectedOption.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    } else {
+      console.error("❌ No valid country code found");
+    }
+  } else {
+    console.error("❌ No country found for coordinates:", lat, lng);
   }
 }
 
@@ -204,7 +264,6 @@ function fallbackLocation() {
   userLng = -4;
   map.setView([userLat, userLng], 6);
   addMarkersToClusters();
-  $("#loader").hide();
 }
 
 function showToast(message, type = "info") {
@@ -237,12 +296,12 @@ function showToast(message, type = "info") {
 
 const streets = L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  { attribution: "© OpenStreetMap contributors" }
+  { attribution: "© OpenStreetMap contributors" },
 );
 
 const satellite = L.tileLayer(
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-  { attribution: "Tiles © Esri" }
+  { attribution: "Tiles © Esri" },
 );
 
 const airportCluster = L.markerClusterGroup({
@@ -275,20 +334,9 @@ const cityCluster = L.markerClusterGroup({
   disableClusteringAtZoom: 8,
 });
 
-function setUserLocationMarker(lat, lng) {
-  if (userLocationMarker) {
-    userLocationMarker.setLatLng([lat, lng]);
-  } else {
-    userLocationMarker = L.marker([lat, lng])
-      .addTo(map)
-      .bindPopup("You are here");
-  }
-  userLocationMarker.openPopup();
-}
-
 function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
   $.ajax({
-    url: "./php/getWeather.php",
+    url: "./php/getweather.php",
     method: "POST",
     data: { lat, lon },
     dataType: "json",
@@ -303,12 +351,12 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
           <tr>
             <td class="text-center"><i class="fa-solid fa-temperature-half fa-xl text-success"></i></td>
             <td>Temperature</td>
-            <td class="text-end">${weather.main.temp} °C</td>
+            <td class="text-end">${numeral(weather.main.temp).format("0")} °C</td>
           </tr>
           <tr>
             <td class="text-center"><i class="fa-solid fa-wind fa-xl text-success"></i></td>
             <td>Wind Speed</td>
-            <td class="text-end">${weather.wind.speed} m/s</td>
+            <td class="text-end">${numeral(weather.wind.speed).format("0.0")} m/s</td>
           </tr>
           <tr>
             <td class="text-center"><i class="fa-solid fa-cloud fa-xl text-success"></i></td>
@@ -317,7 +365,7 @@ function fetchWeatherAndDisplay(lat, lon, showInModal = false) {
           </tr>
         `;
         $("#exampleModal .modal-body").html(
-          `<table class="table">${tableRows}</table>`
+          `<table class="table">${tableRows}</table>`,
         );
         $("#exampleModal").modal("show");
       }
@@ -351,7 +399,7 @@ function weatherEmoji(condition) {
 
 function getForecast(lat, lon) {
   $.ajax({
-    url: "./php/getForecast.php",
+    url: "./php/getforecast.php",
     method: "POST",
     data: { lat, lon },
     dataType: "json",
@@ -380,27 +428,21 @@ function getForecast(lat, lon) {
 
         const emoji = weatherEmoji(entry.weather[0].main);
 
-        
-        const dateObj = new Date(date);
-        const dayName = dateObj.toLocaleDateString("en-US", {
-          weekday: "short",
-        });
-        const monthDay = dateObj.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        });
+        const dateObj = Date.parse(date);
+        const dayName = dateObj.toString("ddd");
+        const monthDay = dateObj.toString("MMM d");
 
         html += `
           <div class="forecast-day">
             <h6>${dayName}</h6>
             <div style="font-size: 42px; margin: 10px 0;">${emoji}</div>
-            <div><strong>${Math.round(entry.main.temp)}°C</strong></div>
+            <div><strong>${numeral(entry.main.temp).format("0")}°C</strong></div>
             <div class="text-capitalize small" style="margin-top: 8px; font-weight: 500;">${
               entry.weather[0].description
             }</div>
-            <div class="small" style="opacity: 0.8; margin-top: 4px;">💨 ${
-              entry.wind.speed
-            } m/s</div>
+            <div class="small" style="opacity: 0.8; margin-top: 4px;">💨 ${numeral(
+              entry.wind.speed,
+            ).format("0.0")} m/s</div>
             <div class="small" style="opacity: 0.7; margin-top: 8px; font-size: 11px;">${monthDay}</div>
           </div>
         `;
@@ -428,16 +470,17 @@ function getWikipedia(countryName) {
 
   $.ajax({
     type: "POST",
-    url: "./php/getWikipedia.php",
+    url: "./php/getwikipedia.php",
     data: { countryName: countryName },
     dataType: "json",
     success: function (response) {
       console.log("Wikipedia Response:", response);
 
       if (response.status && response.status.name === "ok" && response.data) {
-        const { summary, url } = response.data;
+        const { title, summary, url } = response.data;
 
         $("#wikiInfoText").html(`
+          <h5 class="mb-3">${title}</h5>
           <p>${summary || "No summary available."}</p>
           <p><a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">
             🌐 Read full article on Wikipedia
@@ -453,7 +496,7 @@ function getWikipedia(countryName) {
 $("#wikiModal").on("show.bs.modal", function () {
   const selectedCode = $("#countrySelect").val();
   const country = countryList.find(
-    (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
+    (c) => c.code.toLowerCase() === selectedCode?.toLowerCase(),
   );
 
   if (country) {
@@ -468,7 +511,7 @@ function getPopulation(countryCodeOrName) {
   console.log("Requesting population for:", countryCodeOrName);
   $.ajax({
     type: "POST",
-    url: "./php/getPopulation.php",
+    url: "./php/getpopulation.php",
     data: { country: countryCodeOrName },
     dataType: "json",
     success: function (response) {
@@ -501,11 +544,11 @@ function getPopulation(countryCodeOrName) {
               </tr>
               <tr>
                 <th scope="row"><i class="fa fa-users"></i> Population</th>
-                <td><strong>${data.population.toLocaleString()}</strong></td>
+                <td><strong>${numeral(data.population).format("0,0")}</strong></td>
               </tr>
               <tr>
                 <th scope="row"><i class="fa fa-globe"></i> Area</th>
-                <td>${data.area.toLocaleString()} km²</td>
+                <td>${numeral(data.area).format("0,0")} km²</td>
               </tr>
               <tr>
                 <th scope="row"><i class="fa fa-map"></i> Region</th>
@@ -543,7 +586,7 @@ function getPopulation(countryCodeOrName) {
 
 function getWeather(countryName) {
   const country = countryList.find(
-    (c) => c.name.toLowerCase() === countryName.toLowerCase()
+    (c) => c.name.toLowerCase() === countryName.toLowerCase(),
   );
 
   if (!country) {
@@ -553,7 +596,11 @@ function getWeather(countryName) {
 
   if (countriesGeoJSON) {
     const feature = countriesGeoJSON.features.find((f) => {
-      const isoCode = f.properties.ISO_A3 || f.properties.iso_a3;
+      const isoCode =
+        f.properties.iso_a2 ||
+        f.properties.iso_a3 ||
+        f.properties.ISO_A2 ||
+        f.properties.ISO_A3;
       return isoCode && isoCode.toLowerCase() === country.code.toLowerCase();
     });
 
@@ -570,13 +617,10 @@ function getWeather(countryName) {
   }
 }
 
-
-
 function showInfoModal(title, content, isWide = false) {
   $("#exampleModal .modal-title").text(title);
   $("#exampleModal .modal-body").html(content);
 
-  
   if (isWide) {
     $("#exampleModal .modal-dialog").addClass("modal-xl-custom");
   } else {
@@ -587,26 +631,48 @@ function showInfoModal(title, content, isWide = false) {
 }
 
 function populateCountryDropdown() {
-  $.getJSON("data/countries.geojson", function (data) {
-    const $select = $("#countrySelect");
-    $select.empty();
-    $select.append(
-      '<option value="" disabled selected>-- Select a country --</option>'
-    );
-    countryList = [];
-    data.features.forEach((feature) => {
-      const name = feature.properties.ADMIN;
-      const code = feature.properties.ISO_A3;
-      const currency = feature.properties.currency;
+  console.log("🌎 Populating country dropdown...");
+  $.ajax({
+    url: "./php/getcountrylist.php",
+    type: "GET",
+    dataType: "json",
+    success: function (countries) {
+      console.log(`✅ Received ${countries.length} countries from PHP`);
+      const $select = $("#countrySelect");
+      $select.empty();
+      $select.append(
+        '<option value="" disabled selected>Choose a country...</option>',
+      );
+      countryList = [];
 
-      if (name && code) {
-        const countryCode = code.toLowerCase();
-        $select.append(`<option value="${countryCode}">${name}</option>`);
-        countryList.push({ name, code: countryCode, currency });
+      if (Array.isArray(countries)) {
+        countries.forEach((country) => {
+          if (country.name && country.code) {
+            const countryCode = country.code.toLowerCase();
+            $select.append(
+              `<option value="${countryCode}">${country.name}</option>`,
+            );
+            countryList.push({ name: country.name, code: countryCode });
+          }
+        });
+        console.log(
+          `✅ Dropdown populated with ${countryList.length} countries`,
+        );
+        console.log(
+          `📝 Sample codes: ${countryList
+            .slice(0, 5)
+            .map((c) => c.code)
+            .join(", ")}`,
+        );
+      } else {
+        console.error("❌ Invalid country data format");
+        showToast("Invalid country data format.", "danger");
       }
-    });
-  }).fail(() => {
-    showToast("Failed to load countries data.", "danger");
+    },
+    error: function () {
+      console.error("❌ Failed to load countries from PHP");
+      showToast("Failed to load countries data.", "danger");
+    },
   });
 }
 
@@ -614,7 +680,11 @@ function highlightCountryBorder(code, countryNameFromDropdown) {
   if (!countriesGeoJSON) return;
 
   const feature = countriesGeoJSON.features.find((f) => {
-    const isoCode = f.properties.ISO_A3 || f.properties.iso_a3;
+    const isoCode =
+      f.properties.iso_a2 ||
+      f.properties.iso_a3 ||
+      f.properties.ISO_A2 ||
+      f.properties.ISO_A3;
     return isoCode && isoCode.toLowerCase() === code.toLowerCase();
   });
 
@@ -633,16 +703,14 @@ function highlightCountryBorder(code, countryNameFromDropdown) {
 
   map.fitBounds(selectedCountryLayer.getBounds(), { padding: [50, 50] });
 
- 
+  hideLoader();
   const bounds = selectedCountryLayer.getBounds();
   const center = bounds.getCenter();
 
-  
   if (window.countryLabelMarker) {
     map.removeLayer(window.countryLabelMarker);
   }
 
-  
   const countryName =
     countryNameFromDropdown ||
     feature.properties.ADMIN ||
@@ -656,28 +724,24 @@ function highlightCountryBorder(code, countryNameFromDropdown) {
     icon: L.divIcon({
       className: "country-label-marker",
       html: `<div class="country-label country-label-visible">${countryName}</div>`,
-      iconSize: null, 
-      iconAnchor: null, 
+      iconSize: null,
+      iconAnchor: null,
     }),
-    interactive: false, 
+    interactive: false,
   }).addTo(map);
 
   console.log("Country selected:", countryName, "Code:", code);
 
- 
   if (window.countryLabelTimeout) {
     clearTimeout(window.countryLabelTimeout);
   }
 
- 
   window.countryLabelTimeout = setTimeout(() => {
     if (window.countryLabelMarker) {
-
       const labelElement = document.querySelector(".country-label-visible");
       if (labelElement) {
         labelElement.classList.add("country-label-fadeout");
 
-       
         setTimeout(() => {
           if (window.countryLabelMarker) {
             map.removeLayer(window.countryLabelMarker);
@@ -693,7 +757,18 @@ $(document).ready(function () {
   map = L.map("map", { layers: [streets] }).setView([54.5, -4], 6);
   loadGeoJSONData();
   populateCountryDropdown();
-  get_user_location();
+
+  var basemaps = {
+    Streets: streets,
+    Satellite: satellite,
+  };
+
+  var overlays = {
+    Airports: airportCluster,
+    Cities: cityCluster,
+  };
+
+  L.control.layers(basemaps, overlays).addTo(map);
 
   L.easyButton({
     states: [
@@ -703,13 +778,17 @@ $(document).ready(function () {
         onClick: () => {
           const selectedCode = $("#countrySelect").val();
           const selectedCountry = countryList.find(
-            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
+            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase(),
           );
 
           if (selectedCountry) {
             if (countriesGeoJSON) {
               const feature = countriesGeoJSON.features.find((f) => {
-                const isoCode = f.properties.ISO_A3 || f.properties.iso_a3;
+                const isoCode =
+                  f.properties.iso_a2 ||
+                  f.properties.iso_a3 ||
+                  f.properties.ISO_A2 ||
+                  f.properties.ISO_A3;
                 return (
                   isoCode &&
                   isoCode.toLowerCase() === selectedCountry.code.toLowerCase()
@@ -734,7 +813,7 @@ $(document).ready(function () {
       },
     ],
   }).addTo(map);
- 
+
   L.easyButton({
     states: [
       {
@@ -753,14 +832,14 @@ $(document).ready(function () {
           }
 
           const selectedCountry = countryList.find(
-            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
+            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase(),
           );
           console.log("Found country:", selectedCountry);
 
           if (!selectedCountry) {
             showToast(
               "Country not found. Selected: " + selectedCode,
-              "warning"
+              "warning",
             );
             return;
           }
@@ -773,12 +852,15 @@ $(document).ready(function () {
           console.log("Looking for country code:", selectedCountry.code);
           console.log(
             "GeoJSON features count:",
-            countriesGeoJSON.features.length
+            countriesGeoJSON.features.length,
           );
 
           const feature = countriesGeoJSON.features.find((f) => {
             const iso = (
-              f.properties.ISO_A3 || f.properties.iso_a3
+              f.properties.iso_a2 ||
+              f.properties.iso_a3 ||
+              f.properties.ISO_A2 ||
+              f.properties.ISO_A3
             )?.toLowerCase();
             return iso === selectedCountry.code;
           });
@@ -787,7 +869,6 @@ $(document).ready(function () {
           if (feature) {
             console.log("Feature properties:", feature.properties);
           } else {
-            
             const sampleCodes = countriesGeoJSON.features
               .slice(0, 5)
               .map((f) => f.properties.ISO_A3);
@@ -802,7 +883,7 @@ $(document).ready(function () {
           } else {
             showToast(
               "Could not find country location for: " + selectedCountry.code,
-              "warning"
+              "warning",
             );
           }
         },
@@ -819,7 +900,7 @@ $(document).ready(function () {
         onClick: () => {
           const selectedCode = $("#countrySelect").val();
           const selectedCountry = countryList.find(
-            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase()
+            (c) => c.code.toLowerCase() === selectedCode?.toLowerCase(),
           );
 
           if (selectedCountry) {
@@ -866,54 +947,7 @@ $(document).ready(function () {
         icon: "fa-money-bill-wave",
         title: "Currency Converter",
         onClick: () => {
-          
-          const selectedMainCountry = $("#countrySelect").val();
-
-          showInfoModal(
-            "Currency Converter",
-            `
-    <div class="form-group mt-2">
-      <label for="countryCurrencySelect"><strong>Select Country:</strong></label>
-      <select id="countryCurrencySelect" class="form-control form-control-sm">
-        <option value="" disabled>Select a country</option>
-        ${countryList
-          .map(
-            (c) =>
-              `<option value="${c.code}" ${
-                selectedMainCountry &&
-                c.code.toLowerCase() === selectedMainCountry.toLowerCase()
-                  ? "selected"
-                  : ""
-              }>${c.name}</option>`
-          )
-          .join("")}
-      </select>
-    </div>
-    <div class="form-group mt-2">
-      <label for="currencySelect"><strong>Currency:</strong></label>
-      <select id="currencySelect" class="form-control form-control-sm" disabled>
-        <option value="">Select a country first</option>
-      </select>
-    </div>
-    <div class="form-group mt-2">
-      <label for="usdInput"><strong>Amount:</strong></label>
-      <input type="number" id="usdInput" class="form-control form-control-sm" placeholder="Enter amount" min="0" step="any" />
-    </div>
-    <div class="form-group mt-2">
-      <button id="Convert" class="btn btn-primary btn-sm" disabled>Convert to EUR</button>
-    </div>
-    <div class="mt-3">
-      <strong>Converted Amount:</strong> <span id="convertedAmount">—</span>
-    </div>
-    `
-          );
-
-          
-          if (selectedMainCountry) {
-            setTimeout(() => {
-              $("#countryCurrencySelect").trigger("change");
-            }, 100);
-          }
+          $("#currencyModal").modal("show");
         },
       },
     ],
@@ -924,7 +958,7 @@ $(document).ready(function () {
     if (!selectedCode) return;
 
     const selectedCountry = countryList.find(
-      (c) => c.code.toLowerCase() === selectedCode.toLowerCase()
+      (c) => c.code.toLowerCase() === selectedCode.toLowerCase(),
     );
 
     if (!selectedCountry) return;
@@ -932,99 +966,90 @@ $(document).ready(function () {
     const countryName = selectedCountry.name;
     const countryCode = selectedCountry.code;
 
-    highlightCountryBorder(countryCode, countryName); 
+    highlightCountryBorder(countryCode, countryName);
     addMarkersToClusters(countryCode);
     getWeather(countryName);
     getPopulation(countryCode);
   });
 
-  
-  $(document).on("change", "#countryCurrencySelect", function () {
-    const selectedCountryCode = $(this).val();
-    const currencySelectEl = $("#currencySelect");
-    const convertBtn = $("#Convert");
+  function calcResult() {
+    const fromAmount = parseFloat($("#fromAmount").val()) || 0;
+    const exchangeRate = parseFloat($("#exchangeRate").val()) || 0;
 
-    if (!selectedCountryCode) {
-      currencySelectEl
-        .html('<option value="">Select a country first</option>')
-        .prop("disabled", true);
-      convertBtn.prop("disabled", true);
-      return;
+    if (fromAmount > 0 && exchangeRate > 0) {
+      const result = fromAmount * exchangeRate;
+      $("#toAmount").val(numeral(result).format("0,0.00"));
+    } else {
+      $("#toAmount").val("");
+    }
+  }
+
+  
+  $("#currencyModal").on("show.bs.modal", function () {
+    const exchangeRateSelect = $("#exchangeRate");
+
+    
+    if (exchangeRateSelect.find("option").length === 1) {
+      exchangeRateSelect.html(
+        '<option value="">Loading currencies...</option>',
+      );
+
+      $.ajax({
+        url: "./php/getallcurrencies.php",
+        type: "GET",
+        dataType: "json",
+        success: function (response) {
+          if (response.success && response.currencies) {
+            exchangeRateSelect.empty();
+
+            
+            response.currencies.sort((a, b) => a.name.localeCompare(b.name));
+
+            
+            response.currencies.forEach((currency) => {
+              exchangeRateSelect.append(
+                `<option value="${currency.rate}">${currency.name}</option>`,
+              );
+            });
+
+            showToast("Currencies loaded successfully", "success");
+          } else {
+            exchangeRateSelect.html(
+              '<option value="">Failed to load currencies</option>',
+            );
+            showToast("Failed to load currencies", "danger");
+          }
+        },
+        error: function () {
+          exchangeRateSelect.html(
+            '<option value="">Error loading currencies</option>',
+          );
+          showToast("Error loading currencies", "danger");
+        },
+      });
     }
 
-   
-    currencySelectEl
-      .html('<option value="">Loading...</option>')
-      .prop("disabled", true);
-    convertBtn.prop("disabled", true);
-
-    $.post(
-      "./php/getCurrency.php",
-      { countryCode: selectedCountryCode },
-      function (data) {
-        if (data && data.currency && !data.error) {
-          currencySelectEl.html(
-            `<option value="${data.currency}" selected>${data.currency}</option>`
-          );
-          currencySelectEl.prop("disabled", false);
-          convertBtn.prop("disabled", false);
-        } else {
-          currencySelectEl.html(
-            '<option value="">Currency not available</option>'
-          );
-          currencySelectEl.prop("disabled", true);
-          convertBtn.prop("disabled", true);
-          showToast(
-            data.error || "Currency not available for this country",
-            "warning"
-          );
-        }
-      },
-      "json"
-    ).fail(() => {
-      showToast("Failed to load currency data", "danger");
-      currencySelectEl.html('<option value="">Error loading currency</option>');
-      currencySelectEl.prop("disabled", true);
-      convertBtn.prop("disabled", true);
-    });
+    
+    calcResult();
   });
 
-  $(document).on("click", "#Convert", function () {
-    const usdAmount = parseFloat($("#usdInput").val());
-    const selectedCurrency = $("#currencySelect").val();
-    const selectedCountryCode = $("#countryCurrencySelect").val();
-    const resultEl = $("#convertedAmount");
+  
+  $("#currencyModal").on("hidden.bs.modal", function () {
+    $("#fromAmount").val(1);
+    $("#toAmount").val("");
+  });
 
-    if (!selectedCurrency || !selectedCountryCode) {
-      resultEl.text("Please select a country with a supported currency.");
-      return;
-    }
-    if (isNaN(usdAmount) || usdAmount <= 0) {
-      resultEl.text("Please enter a valid amount greater than zero.");
-      return;
-    }
+  
+  $("#fromAmount").on("keyup", function () {
+    calcResult();
+  });
 
-    resultEl.text("Converting...");
+  $("#fromAmount").on("change", function () {
+    calcResult();
+  });
 
-    $.post(
-      "./php/getCurrency.php",
-      { countryCode: selectedCountryCode },
-      function (data) {
-        if (data && data.currency && data.rate && data.rate > 0) {
-          const converted = usdAmount * data.rate;
-          resultEl.html(
-            `${usdAmount.toFixed(2)} ${data.currency} = ${converted.toFixed(
-              2
-            )} EUR`
-          );
-        } else {
-          resultEl.text(data.error || "Currency data not available.");
-        }
-      },
-      "json"
-    ).fail(() => {
-      resultEl.text("Failed to fetch exchange rate.");
-    });
+  $("#exchangeRate").on("change", function () {
+    calcResult();
   });
 
   L.easyButton({
@@ -1043,52 +1068,5 @@ $(document).ready(function () {
       },
     ],
   }).addTo(map);
-
-  L.easyButton({
-    states: [
-      {
-        icon: '<i class="fa-solid fa-location-crosshairs"></i>',
-        title: "My Location",
-        onClick: () => {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                userLat = pos.coords.latitude;
-                userLng = pos.coords.longitude;
-                map.setView([userLat, userLng], 12);
-                setUserLocationMarker(userLat, userLng);
-                showToast("Location updated", "success");
-              },
-              () => showToast("Unable to retrieve your location.", "warning")
-            );
-          } else {
-            showToast(
-              "Geolocation is not supported by your browser.",
-              "danger"
-            );
-          }
-        },
-      },
-    ],
-  }).addTo(map);
-
-  
 });
-$("#wikiModal").on("show.bs.modal", function () {
-  const selected = $("#countrySelect").val();
-  const country = countryList.find(
-    (c) => c.code.toLowerCase() === selected.toLowerCase()
-  );
 
-  if (country) {
-    const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(
-      country.name
-    )}`;
-    $("#wikiInfoText").html(
-      `Read more about <strong>${country.name}</strong> on Wikipedia:`
-    );
-    $("#wikiLink").attr("href", wikiUrl).removeClass("d-none");
-  } else {
-    $("#wikiInfoText").text("Country data not found.");
-  }
-});
