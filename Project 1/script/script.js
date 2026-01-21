@@ -184,31 +184,52 @@ function highlightCountryAndMarkers(code, countryName) {
 
 function get_user_location() {
   console.log("🌍 get_user_location called");
-  if (navigator.geolocation) {
-    console.log("✅ Geolocation is supported");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        userLat = pos.coords.latitude;
-        userLng = pos.coords.longitude;
-        console.log(`📍 Got coordinates: ${userLat}, ${userLng}`);
 
-        map.setView([userLat, userLng], 6);
-
-        console.log("🔍 Calling useTurfDetection...");
-        useTurfDetection(userLat, userLng);
-
-        fetchWeatherAndDisplay(userLat, userLng, autoShowWeatherModal);
-      },
-      (error) => {
-        console.error("❌ Geolocation error:", error.message);
-        fallbackLocation();
-      },
-    );
-  } else {
-    console.log("❌ Geolocation not supported");
+  if (!navigator.geolocation) {
     fallbackLocation();
+    return;
   }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+
+      map.setView([userLat, userLng], 6);
+
+      
+      $.ajax({
+        url: "./php/getcountryfromcoords.php",
+        type: "POST",
+        dataType: "json",
+        data: {
+          lat: userLat,
+          lng: userLng,
+        },
+        success: function (res) {
+          if (res.status === "ok" && res.countryCode) {
+            $("#countrySelect").val(res.countryCode.toLowerCase()).change();
+          } else {
+            console.warn("GeoNames failed, falling back to Turf");
+            useTurfDetection(userLat, userLng);
+          }
+        },
+        error: function () {
+          console.warn("AJAX failed, falling back to Turf");
+          useTurfDetection(userLat, userLng);
+        },
+      });
+
+      fetchWeatherAndDisplay(userLat, userLng, autoShowWeatherModal);
+    },
+    (error) => {
+      console.error("❌ Geolocation error:", error.message);
+      fallbackLocation();
+    },
+  );
 }
+
+
 
 function useTurfDetection(lat, lng) {
   console.log(`🔍 useTurfDetection called with: ${lat}, ${lng}`);
@@ -1035,7 +1056,7 @@ $(document).ready(function () {
 
   
   $("#currencyModal").on("hidden.bs.modal", function () {
-    $("#fromAmount").val(1);
+    $("#fromAmount").val(0);
     $("#toAmount").val("");
   });
 
