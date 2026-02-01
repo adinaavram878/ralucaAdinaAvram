@@ -50,6 +50,7 @@ Error Handling & User Feedback
     • Responses are differentiated based on status fields from APIs.
 
 Key Technologies Used
+
     • JavaScript / jQuery: DOM manipulation, event handling, AJAX requests
     • Leaflet.js & Turf.js: Interactive map rendering, geospatial calculations
     • PHP: Server-side processing, API integration, and data aggregation
@@ -60,4 +61,5 @@ Key Technologies Used
     
 
 Summary
+
 This project demonstrates robust asynchronous communication, a clear separation of frontend and backend responsibilities, and dynamic geospatial data visualization. It is designed for scalability, responsiveness, and seamless integration with multiple external APIs, including weather, Wikipedia, and financial services.
