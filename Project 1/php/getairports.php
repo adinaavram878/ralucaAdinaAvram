@@ -16,7 +16,7 @@ if (!isset($_POST['countryCode'])) {
 }
 
 $countryCode = strtoupper(trim($_POST['countryCode']));
-$username = 'adinaavram'; 
+$username = 'username'; 
 
 
 $url = "http://api.geonames.org/searchJSON?country={$countryCode}&featureCode=AIRP&maxRows=100&username={$username}";
