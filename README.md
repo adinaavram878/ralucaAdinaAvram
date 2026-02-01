@@ -1,3 +1,4 @@
 # ralucaAdinaAvram
 Interactive Geospatial Web Application
+
 A feature-rich geospatial web application built with Leaflet.js and JavaScript, integrating GeoJSON country borders, browser geolocation, and Turf.js spatial analysis. The application consumes multiple external APIs via AJAX-driven PHP services to deliver real-time weather data, 5-day forecasts, demographic statistics, Wikipedia content, airport and city datasets, and live currency exchange rates. The UI is implemented using Bootstrap, jQuery, and Font Awesome, featuring clustered map markers, dynamic modals, and responsive user interactions.
