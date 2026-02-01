@@ -14,7 +14,7 @@ if (!$lat || !$lon) {
     exit;
 }
 
-$apiKey = '60b5e9ec6028dc5a8c9ad0e59fbedea2'; 
+$apiKey = 'API_KEY'; 
 
 $apiUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&appid=$apiKey";
 
