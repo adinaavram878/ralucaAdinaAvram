@@ -58,7 +58,7 @@ $currencies = [
 ];
 
 
-$apiKey = '3c864c951e2a21a7fa71b6c2b2beb61a';
+$apiKey = 'API_KEY';
 $symbols = implode(',', array_keys($currencies));
 $url = "http://data.fixer.io/api/latest?access_key=$apiKey&symbols=$symbols";
 
