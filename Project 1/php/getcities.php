@@ -15,7 +15,7 @@ if (!isset($_POST['countryCode'])) {
 }
 
 $countryCode = strtoupper(trim($_POST['countryCode']));
-$username = 'adinaavram'; 
+$username = 'username'; 
 
 
 $url = "http://api.geonames.org/searchJSON?country={$countryCode}&featureClass=P&maxRows=50&username={$username}&orderby=population";
