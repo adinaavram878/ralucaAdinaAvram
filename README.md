@@ -1,4 +1,5 @@
 Functional Modules
+
     1. Geolocation & Map Rendering
 • Inputs: Browser geolocation or manual latitude/longitude selection
 • Backend endpoint: N/A (client-side Leaflet.js)
@@ -6,6 +7,7 @@ Functional Modules
 ◦ Detects user location via browser geolocation API.
 ◦ Renders interactive map using Leaflet.js.
 ◦ Displays clustered markers for cities, airports, and points of interest.
+
     2. Country & Demographic Data
 • Inputs: Country selection
 • Backend endpoint: country_data.php
@@ -13,24 +15,28 @@ Functional Modules
 ◦ Fetches country metadata, including population, area, and region.
 ◦ Dynamically renders content in UI panels.
 ◦ Integrates GeoJSON for country borders visualization.
+
     3. Weather Information Retrieval
 • Inputs: Location coordinates or city name
 • Backend endpoint: weather.php
 • Functionality:
 ◦ Requests current weather and 5-day forecasts via external weather APIs.
 ◦ Displays temperature, humidity, wind speed, and weather conditions.
+
     4. Wikipedia Content Lookup
 • Inputs: City or country name
 • Backend endpoint: wikipedia.php
 • Functionality:
 ◦ Fetches relevant Wikipedia summaries via API.
 ◦ Dynamically renders content in a modal or sidebar.
+
     5. Currency Exchange Rates
 • Inputs: Base currency and target currency
 • Backend endpoint: currency.php
 • Functionality:
 ◦ Retrieves real-time exchange rates using a financial API.
 ◦ Updates UI dynamically with conversion values.
+
     6. Airports & Cities Database
 • Inputs: Country or region selection
 • Backend endpoint: locations.php
